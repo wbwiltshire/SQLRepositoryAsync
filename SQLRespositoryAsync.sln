@@ -1,0 +1,68 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Regression.Test", "Regression.Test\Regression.Test.csproj", "{E6155967-85FC-4CD4-87E0-4684F05BD19A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{905533E4-2AA9-4169-B161-F931ED2599A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "POCO", "POCO\POCO.csproj", "{1BC80114-A53A-46B1-A14E-1D61332E64F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repository", "Repository\Repository.csproj", "{2DF75F46-27D2-4BF8-BC35-16E2D7FDD619}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7EAE3D87-54D3-4619-B848-BFADBCB51887}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+		RunRegressionTest.cmd = RunRegressionTest.cmd
+		XUnitSummary.ps1 = XUnitSummary.ps1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL", "SQL", "{78799F41-3E2B-4B28-A1BE-615B80C71458}"
+	ProjectSection(SolutionItems) = preProject
+		SQL\CreateCity.sql = SQL\CreateCity.sql
+		SQL\CreateContact.sql = SQL\CreateContact.sql
+		SQL\CreateForeignKeyConstraints.sql = SQL\CreateForeignKeyConstraints.sql
+		SQL\CreateState.sql = SQL\CreateState.sql
+		SQL\CreateStoredProcedures.sql = SQL\CreateStoredProcedures.sql
+		SQL\CreateTables.cmd = SQL\CreateTables.cmd
+		SQL\CreateViews.sql = SQL\CreateViews.sql
+		SQL\DropForeignKeyConstraints.sql = SQL\DropForeignKeyConstraints.sql
+		SQL\DropTables.sql = SQL\DropTables.sql
+		SQL\ExportData.cmd = SQL\ExportData.cmd
+		SQL\LoadData.cmd = SQL\LoadData.cmd
+		SQL\Queries.sql = SQL\Queries.sql
+		SQL\ReloadDatabase.cmd = SQL\ReloadDatabase.cmd
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E6155967-85FC-4CD4-87E0-4684F05BD19A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6155967-85FC-4CD4-87E0-4684F05BD19A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6155967-85FC-4CD4-87E0-4684F05BD19A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6155967-85FC-4CD4-87E0-4684F05BD19A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{905533E4-2AA9-4169-B161-F931ED2599A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{905533E4-2AA9-4169-B161-F931ED2599A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{905533E4-2AA9-4169-B161-F931ED2599A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{905533E4-2AA9-4169-B161-F931ED2599A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BC80114-A53A-46B1-A14E-1D61332E64F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BC80114-A53A-46B1-A14E-1D61332E64F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BC80114-A53A-46B1-A14E-1D61332E64F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BC80114-A53A-46B1-A14E-1D61332E64F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DF75F46-27D2-4BF8-BC35-16E2D7FDD619}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DF75F46-27D2-4BF8-BC35-16E2D7FDD619}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DF75F46-27D2-4BF8-BC35-16E2D7FDD619}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DF75F46-27D2-4BF8-BC35-16E2D7FDD619}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{78799F41-3E2B-4B28-A1BE-615B80C71458} = {7EAE3D87-54D3-4619-B848-BFADBCB51887}
+	EndGlobalSection
+EndGlobal
