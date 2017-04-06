@@ -13,6 +13,10 @@ namespace SQLRepositoryAsync.Data
     {
         public object Key { get; set; }
         public bool IsIdentity { get; set; }
+        public override string ToString()
+        {
+            return $"{Key}|{IsIdentity}";
+        }
     }
 
     public abstract class MapToObjectBase<TEntity> : IMapToObject<TEntity>
@@ -26,7 +30,6 @@ namespace SQLRepositoryAsync.Data
         where TEntity : class
     {
         protected readonly ILogger logger;
-        //protected static readonly ILog log = LogManager.GetLogger(typeof(MapToObjectBase<TEntity>));
 
         public abstract void Execute(TEntity entity, SqlCommand cmd);
     }

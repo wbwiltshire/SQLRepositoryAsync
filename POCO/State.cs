@@ -42,13 +42,19 @@ namespace SQLRepositoryAsync.Data.POCO
         public override State Execute(IDataReader reader)
         {
             State state = new State();
+            int ordinal = 0;
             try
             {
-                state.Id = reader.GetString(0);
-                state.Name = reader.GetString(1);
-                state.Active = reader.GetBoolean(2);
-                state.ModifiedDt = reader.GetDateTime(3);
-                state.CreateDt = reader.GetDateTime(4);
+                ordinal = reader.GetOrdinal("Id");
+                state.Id = reader.GetString(ordinal);
+                ordinal = reader.GetOrdinal("Name");
+                state.Name = reader.GetString(ordinal);
+                ordinal = reader.GetOrdinal("Active");
+                state.Active = reader.GetBoolean(ordinal);
+                ordinal = reader.GetOrdinal("ModifiedDt");
+                state.ModifiedDt = reader.GetDateTime(ordinal);
+                ordinal = reader.GetOrdinal("CreateDt");
+                state.CreateDt = reader.GetDateTime(ordinal);
             }
             catch (Exception ex)
             {

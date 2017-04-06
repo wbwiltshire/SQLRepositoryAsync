@@ -4,6 +4,7 @@
 ******************************************************************************************************/
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
@@ -32,10 +33,10 @@ namespace SQLRepositoryAsync.Data.POCO
         {
             PK = new PrimaryKey() { Key = -1, IsIdentity = true };
         }
-        public string ToPrint()
-        {
-            return String.Format("{0}|{1}|{2}|{3}|{4}|{5}|", Id, Name, StateId, Active, ModifiedDt, CreateDt);
-        }
+		public override string ToString()
+		{
+			return $"{Id}|{Name}|{StateId}|{Active}|{ModifiedDt}|{CreateDt}|";
+		}
 
         //Relation properties
         public State State { get; set; }
@@ -46,15 +47,22 @@ namespace SQLRepositoryAsync.Data.POCO
         public override City Execute(IDataReader reader)
         {
             City city = new City();
+            int ordinal = 0;
 
             try
             {
-                city.Id = reader.GetInt32(0);
-                city.Name = reader.GetString(1);
-                city.StateId = reader.GetString(2);
-                city.Active = reader.GetBoolean(3);
-                city.ModifiedDt = reader.GetDateTime(4);
-                city.CreateDt = reader.GetDateTime(5);
+				ordinal = reader.GetOrdinal("Id");
+				city.Id = reader.GetInt32(ordinal);
+				ordinal = reader.GetOrdinal("Name");
+				city.Name = reader.GetString(ordinal);
+				ordinal = reader.GetOrdinal("StateId");
+				city.StateId = reader.GetString(ordinal);
+				ordinal = reader.GetOrdinal("Active");
+				city.Active = reader.GetBoolean(ordinal);
+				ordinal = reader.GetOrdinal("ModifiedDt");
+				city.ModifiedDt = reader.GetDateTime(ordinal);
+				ordinal = reader.GetOrdinal("CreateDt");
+				city.CreateDt = reader.GetDateTime(ordinal);
             }
             catch (Exception ex)
             {
@@ -68,24 +76,21 @@ namespace SQLRepositoryAsync.Data.POCO
         
         public override City Execute(IDataReader reader)
         {
-            City city = new City() { State = new State() };
+            IMapToObject<City> map = new CityMapToObject();
+            City city = map.Execute(reader);
 
             try
             {
-                city.Id = reader.GetInt32(0);
-                city.Name = reader.GetString(1);
-                city.StateId = reader.GetString(2);
-                city.State.Id = city.StateId;
-                city.State.Name = reader.GetString(3);
-                city.Active = reader.GetBoolean(4);
-                city.ModifiedDt = reader.GetDateTime(5);
-                city.CreateDt = reader.GetDateTime(6);
+                city.State = new State
+                {
+                    PK = new PrimaryKey { Key = city.StateId, IsIdentity = true },
+                    Name = reader.GetString(reader.GetOrdinal("StateName"))
+                };
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
             }
-
             return city;
         }
     }
@@ -95,6 +100,7 @@ namespace SQLRepositoryAsync.Data.POCO
         public override void Execute(City city, SqlCommand cmd)
         {
             SqlParameter parm;
+
             try
             {
                 parm = new SqlParameter("@p1", city.Name);

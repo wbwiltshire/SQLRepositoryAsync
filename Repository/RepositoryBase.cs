@@ -59,6 +59,7 @@ namespace SQLRepositoryAsync.Data.Repository
             {
                 using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
                 {
+                    //Returns an object, not an int
                     cnt = await cmd.ExecuteScalarAsync();
                     logger.LogInformation("FindAllCount complete.");
                     if (cnt != null)

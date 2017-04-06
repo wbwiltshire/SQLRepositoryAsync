@@ -25,6 +25,7 @@ namespace SQLRepositoryAsync.Data.Repository
         private const string FINDALLVIEW_STMT = "SELECT Id,Name,StateId,StateName,Active,ModifiedDt,CreateDt FROM vwFindAllCityView ORDER BY Id";
         private const string FINDALLVIEWPAGER_STMT = "SELECT Id,Name,StateId,StateName,Active,ModifiedDt,CreateDt FROM vwFindAllCityView ORDER BY Id OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY";
         private const string FINDBYPK_STMT = "SELECT Id, Name, StateId, Active, ModifiedDt, CreateDt FROM City WHERE Id =@pk AND Active=1";
+        private const string FINDBYPKVIEW_STMT = "SELECT Id,Name,StateId,StateName,Active,ModifiedDt,CreateDt FROM vwFindAllCityView WHERE Id =@pk AND Active=1";
         private const string ADD_STMT = "INSERT INTO City (Name, StateId, Active, ModifiedDt, CreateDt) VALUES (@p1, @p2, 1, GETDATE(), GETDATE()); SELECT CAST(SCOPE_IDENTITY() AS INT)";
         private const string UPDATE_STMT = "UPDATE City SET Name=@p1, StateId=@p2, Active=1, ModifiedDt=GETDATE() WHERE Id =@pk AND Active=1";
         private const string DELETE_STMT = "UPDATE City SET Active=0, ModifiedDt=GETDATE() WHERE Id =@pk";

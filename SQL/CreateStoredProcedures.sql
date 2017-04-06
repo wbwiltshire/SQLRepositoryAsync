@@ -170,7 +170,7 @@ CREATE PROCEDURE uspUpdateCity
 	
 AS
 BEGIN
-	UPDATE City SET Name=@p1, StateId=@p2, Active=1, ModifiedDt=GETDATE() 
+	UPDATE City SET Name=@p1, StateId=@p2, ModifiedDt=GETDATE() 
 		WHERE Id =@pk AND Active=1
 END
 GO
