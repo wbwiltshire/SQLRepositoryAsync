@@ -105,32 +105,6 @@ BEGIN
 END
 GO
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspFindContactViewByPK')
-	DROP PROCEDURE [dbo].[uspFindContactViewByPK]
-GO
-
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE uspFindContactViewByPK
-	@pk	INT		-- Primary Key
-	
-AS
-BEGIN
-	SELECT c1.Id AS Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, 
-		c2.Name AS CityName, s.Id AS StateId, s.Name AS StateName, 
-		c1.Active AS Active, c1.ModifiedDt AS ModifiedDt, c1.CreateDt AS CreateDt 
-	FROM Contact c1 
-	JOIN City c2 ON (c2.Id = c1.CityId) 
-	JOIN State s ON (s.Id = c2.StateId) 
-	WHERE c1.Id =@pk AND c1.Active = 1 
-	ORDER BY c1.Id 
-END
-GO
-
 --City Stored Procedures
 --
 IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspAddCity')
@@ -232,7 +206,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROCEDURE uspAddState
-	@p1 NVARCHAR (30),		-- Name
+	@p1 NVARCHAR (30),	-- Name
 	@pk CHAR(2)			-- Primary Key
 	
 AS

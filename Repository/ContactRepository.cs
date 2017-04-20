@@ -34,8 +34,8 @@ namespace SQLRepositoryAsync.Data.Repository
         public ContactRepository(AppSettingsConfiguration s, ILogger l) :
             base(s, l)
         { Init(); }
-        public ContactRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow) :
-            base(s, l, uow)
+        public ContactRepository(ILogger l, UnitOfWork uow) :
+            base(l, uow)
         { Init(); }
 
 
@@ -64,7 +64,7 @@ namespace SQLRepositoryAsync.Data.Repository
             //CMDText += ORDERBY_STMT + OrderBy;
             MapToObject = new ContactMapToObject();
 
-            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p.Contains(FINDALL_PAGEDPROC));
+            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDPROC);
             if (storedProcedure == null)
             {
                 SqlCommandType = Constants.DBCommandType.SQL;
@@ -102,7 +102,7 @@ namespace SQLRepositoryAsync.Data.Repository
             //CMDText += ORDERBY_STMT + OrderBy;
             MapToObject = new ContactMapToObjectView();
 
-            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p.Contains(FINDALL_PAGEDVIEWPROC));
+            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDVIEWPROC);
             if (storedProcedure == null)
             {
                 SqlCommandType = Constants.DBCommandType.SQL;
@@ -147,7 +147,7 @@ namespace SQLRepositoryAsync.Data.Repository
             object result;
             int key = 0;
 
-            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p.Contains(ADD_PROC));
+            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == ADD_PROC);
             if (storedProcedure == null)
             {
                 SqlCommandType = Constants.DBCommandType.SQL;
@@ -172,7 +172,7 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             string storedProcedure = String.Empty;
 
-            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p.Contains(UPDATE_PROC));
+            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == UPDATE_PROC);
             if (storedProcedure == null)
             {
                 SqlCommandType = Constants.DBCommandType.SQL;

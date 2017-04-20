@@ -33,8 +33,8 @@ namespace Regression.Test
         [Fact]
         public async Task UOWConnectionTest()
         {
-            UnitOfWork uow = new UnitOfWork(logger);
-            StateRepository repos = new StateRepository(settings, logger, uow);
+            UnitOfWork uow = new UnitOfWork(settings, logger);
+            StateRepository repos = new StateRepository(logger, uow);
             Assert.True(await repos.Ping());
         }
 
@@ -205,8 +205,8 @@ namespace Regression.Test
                 CityId = 1
             };
 
-            UnitOfWork uow = new UnitOfWork(logger);
-            ContactRepository repos = new ContactRepository(settings, logger, uow);
+            UnitOfWork uow = new UnitOfWork(settings, logger);
+            ContactRepository repos = new ContactRepository(logger, uow);
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
             contact.Notes = updateString;
             int rows = await repos.Update(contact);
@@ -227,8 +227,8 @@ namespace Regression.Test
             string updateString = "Rollback this update.";
             string oldNotes = String.Empty;
 
-            UnitOfWork uow = new UnitOfWork(logger);
-            ContactRepository repos = new ContactRepository(settings, logger, uow);
+            UnitOfWork uow = new UnitOfWork(settings, logger);
+            ContactRepository repos = new ContactRepository(logger, uow);
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
             oldNotes = contact.Notes;
             contact.Notes = updateString;

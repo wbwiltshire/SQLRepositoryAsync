@@ -13,14 +13,21 @@ namespace SQLRepositoryAsync.Data.Repository
     public class UnitOfWork
     {
         private readonly ILogger logger;
+        private DBConnection db;
+        private AppSettingsConfiguration settings;
 
-        public UnitOfWork(ILogger l)
+        public UnitOfWork(AppSettingsConfiguration s, ILogger l)
         {
+            settings = s;
             logger = l;
             TransactionCount = 0;
+            db = new DBConnection(settings.Database.ConnectionString, l);
         }
 
-        public async Task<bool> Enlist(SqlConnection conn) 
+        public DBConnection DBconnection { get { return db; } }
+        public AppSettingsConfiguration Settings { get { return settings; } }
+
+        public async Task<bool> Enlist() 
         {
             string CMDText = "BEGIN TRAN T1;";
             int rows;
@@ -31,10 +38,12 @@ namespace SQLRepositoryAsync.Data.Repository
             {
                 try
                 {
+                    if (db.Connection.State != ConnectionState.Open)
+                        await db.OpenConnection();
 
-                    logger.LogInformation($"ConnectionString: {conn.ConnectionString}");
+                    logger.LogInformation($"ConnectionString: {Settings.Database.ConnectionString}");
 
-                    using (SqlCommand cmd = new SqlCommand(CMDText, conn))
+                    using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
                     {
                         rows = await cmd.ExecuteNonQueryAsync();
                     }

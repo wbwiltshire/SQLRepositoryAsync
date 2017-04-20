@@ -30,13 +30,13 @@ namespace SQLRepositoryAsync.Data.Repository
             db = new DBConnection(Settings.Database.ConnectionString, l);
         }
         //ctor with unit of work
-        protected RepositoryBase(AppSettingsConfiguration s, ILogger l, UnitOfWork uow)
+        protected RepositoryBase(ILogger l, UnitOfWork uow)
         {
-            Settings = s;
             logger = l;
             //Setup singleton for DB Connection instance
-            db = new DBConnection(Settings.Database.ConnectionString, l);
             unitOfWork = uow;
+            db = unitOfWork.DBconnection;
+            Settings = unitOfWork.Settings;
         }
         #endregion
 
@@ -176,7 +176,7 @@ namespace SQLRepositoryAsync.Data.Repository
             
             try
             {
-                if (unitOfWork != null) await unitOfWork.Enlist(db.Connection);
+                if (unitOfWork != null) await unitOfWork.Enlist();
                 using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
                 {
                     if (SqlCommandType == Constants.DBCommandType.SPROC)
@@ -215,7 +215,7 @@ namespace SQLRepositoryAsync.Data.Repository
 
             try
             {
-                if (unitOfWork != null) await unitOfWork.Enlist(db.Connection);
+                if (unitOfWork != null) await unitOfWork.Enlist();
                 using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
                 {
                     if (SqlCommandType == Constants.DBCommandType.SPROC)
@@ -242,7 +242,7 @@ namespace SQLRepositoryAsync.Data.Repository
 
             try
             {
-                if (unitOfWork != null) await unitOfWork.Enlist(db.Connection);
+                if (unitOfWork != null) await unitOfWork.Enlist();
                 using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
                 {
                     cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));

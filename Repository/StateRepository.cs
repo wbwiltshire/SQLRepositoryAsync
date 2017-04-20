@@ -35,8 +35,8 @@ namespace SQLRepositoryAsync.Data.Repository
         public StateRepository(AppSettingsConfiguration s, ILogger l) :
             base(s, l)
         { Init(); }
-        public StateRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow) :
-            base(s, l, uow)
+        public StateRepository(ILogger l, UnitOfWork uow) :
+            base(l, uow)
         { Init(); }
 
         private void Init()
@@ -85,7 +85,7 @@ namespace SQLRepositoryAsync.Data.Repository
             object result;
             string key;
 
-            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p.Contains(ADD_PROC));
+            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == ADD_PROC);
             if (storedProcedure == null)
             {
                 SqlCommandType = Constants.DBCommandType.SQL;
@@ -111,7 +111,7 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             string storedProcedure = String.Empty;
 
-            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p.Contains(UPDATE_PROC));
+            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == UPDATE_PROC);
             if (storedProcedure == null)
             {
                 SqlCommandType = Constants.DBCommandType.SQL;
