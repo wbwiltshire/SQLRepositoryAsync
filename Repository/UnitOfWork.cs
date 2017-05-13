@@ -31,7 +31,7 @@ namespace SQLRepositoryAsync.Data.Repository
 
         public async Task<bool> Enlist() 
         {
-            string CMDText = "SET XACT_ABORT ON; BEGIN TRAN T1; BEGIN TRAN T1;";
+            string CMDText = "SET XACT_ABORT ON; BEGIN TRAN T1;";
             int rows;
 
             transactionCount++;
@@ -61,7 +61,7 @@ namespace SQLRepositoryAsync.Data.Repository
 
         public async Task<bool> Save()
         {
-            CMDText = "SET XACT_ABORT ON; BEGIN TRAN T1;";
+            CMDText = "COMMIT TRAN T1;";
             bool status = false;
             int rows;
 
@@ -91,7 +91,7 @@ namespace SQLRepositoryAsync.Data.Repository
             else
             {
                 status = true;
-                logger.LogInformation("Save ignored, because no outstanding unit of work exists.");
+                logger.LogInformation("Save ignored, because no transactions have enlisted.");
             }
             return status;
         }
@@ -127,7 +127,7 @@ namespace SQLRepositoryAsync.Data.Repository
             else
             {
                 status = true;
-                logger.LogInformation("Rollback ignored, because no outstanding unit of work exists.");
+                logger.LogInformation("Rollback ignored, because no transactions have enlisted.");
             }
             return status;
         }
