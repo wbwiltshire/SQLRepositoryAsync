@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using SQLRepositoryAsync.Data.POCO;
+using SQLRepositoryAsync.Data.Repository;
 using Xunit;
 
 namespace Regression.Test

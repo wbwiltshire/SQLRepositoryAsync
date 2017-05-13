@@ -8,19 +8,22 @@ using Microsoft.Extensions.Logging;
 
 namespace SQLRepositoryAsync.Data.Repository
 {
-    public sealed class DBConnection
+    public class DBConnection
     {
         private ILogger logger;
         private SqlConnection connection = null;
-
+        private static bool isOpen = false;
 
         //ctor
         public DBConnection(string connectionString, ILogger l)
         {
             logger = l;
+            isOpen = false;
             try
             {
                 connection = new SqlConnection(connectionString);
+                logger.LogInformation($"ConnectionString: {connectionString}");
+
             }
             catch (SqlException ex)
             {
@@ -33,14 +36,20 @@ namespace SQLRepositoryAsync.Data.Repository
             get { return connection; }
         }
 
-        internal async Task OpenConnection()
+        public static bool IsOpen
+        {
+            get { return isOpen; }
+        }
+
+        public async Task<bool> Open()
         {
             //Only create a connection, if we don't already have one
             if (connection.State != ConnectionState.Open ) {
                 try
                 {
                     await connection.OpenAsync();
-                    logger.LogInformation("Repository connection opened.");
+                    isOpen = true;
+                    logger.LogInformation("DBConnection opened.");
                 }
                 catch (SqlException ex)
                 {
@@ -48,16 +57,21 @@ namespace SQLRepositoryAsync.Data.Repository
                 }
             }
             else
-                logger.LogInformation("Repository connection already open.");
+                logger.LogInformation("DBConnection already open.");
+
+            return isOpen;
         }
 
-        internal void Close()
+        public void Close()
         {
             try
             {
                 if (connection != null)
+                {
                     connection.Close();
-                logger.LogInformation("Repository connection closed.");
+                    isOpen = false;
+                    logger.LogInformation("DBConnection closed.");
+                }  
             }
             catch (Exception ex)
             {

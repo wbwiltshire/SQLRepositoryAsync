@@ -18,31 +18,29 @@ namespace SQLRepositoryAsync.Data.Repository
     {
         private UnitOfWork unitOfWork;
         private readonly ILogger logger;
-        private DBConnection db;
+        private DBConnection dbc;
 
         #region ctor
         //ctor with no unit of work necessary
-        protected RepositoryBase(AppSettingsConfiguration s, ILogger l)
+        protected RepositoryBase(AppSettingsConfiguration s, ILogger l, DBConnection d)
         {
             Settings = s;
             logger = l;
-            //Setup singleton for DB Connection instance
-            db = new DBConnection(Settings.Database.ConnectionString, l);
+            dbc = d;
         }
         //ctor with unit of work
-        protected RepositoryBase(ILogger l, UnitOfWork uow)
+        protected RepositoryBase(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBConnection d)
         {
+            Settings = s;
             logger = l;
-            //Setup singleton for DB Connection instance
             unitOfWork = uow;
-            db = unitOfWork.DBconnection;
-            Settings = unitOfWork.Settings;
+            dbc = d;
         }
         #endregion
 
         public string OrderBy { get; set; }
         protected string CMDText { get; set; }
-        protected AppSettingsConfiguration Settings { get; }
+        protected AppSettingsConfiguration Settings { get; private set; }
         protected Constants.DBCommandType SqlCommandType { get; set; }
         //protected MapperBase<TEntity> Mapper { get; set; }
         protected MapToObjectBase<TEntity> MapToObject { get; set; }
@@ -52,12 +50,9 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             object cnt;
 
-            if (db.Connection.State != ConnectionState.Open)
-                await db.OpenConnection();
-
             try
             {
-                using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     //Returns an object, not an int
                     cnt = await cmd.ExecuteScalarAsync();
@@ -77,12 +72,9 @@ namespace SQLRepositoryAsync.Data.Repository
 
         public virtual async Task<ICollection<TEntity>> FindAll()
         {
-            if (db.Connection.State != ConnectionState.Open)
-                await db.OpenConnection();
-
             try
             {
-                using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
@@ -105,12 +97,9 @@ namespace SQLRepositoryAsync.Data.Repository
 
         public virtual async Task<ICollection<TEntity>> FindAllPaged(int offset, int pageSize)
         {
-            if (db.Connection.State != ConnectionState.Open)
-                await db.OpenConnection();
-
             try
             {
-                using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add(new SqlParameter("@p1", offset));
@@ -139,12 +128,9 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             TEntity entity = null;
 
-            if (db.Connection.State != ConnectionState.Open)
-                await db.OpenConnection();
-
             try
             {
-                using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
@@ -171,13 +157,10 @@ namespace SQLRepositoryAsync.Data.Repository
             object result = null;
             int rows = 0;
 
-            if (db.Connection.State != ConnectionState.Open)
-                await db.OpenConnection();
-            
             try
             {
                 if (unitOfWork != null) await unitOfWork.Enlist();
-                using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     if (SqlCommandType == Constants.DBCommandType.SPROC)
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -210,13 +193,10 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             int rows = 0;
 
-            if (db.Connection.State != ConnectionState.Open)
-                await db.OpenConnection();
-
             try
             {
                 if (unitOfWork != null) await unitOfWork.Enlist();
-                using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     if (SqlCommandType == Constants.DBCommandType.SPROC)
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -237,13 +217,10 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             int rows = 0;
 
-            if (db.Connection.State != ConnectionState.Open)
-                await db.OpenConnection();
-
             try
             {
                 if (unitOfWork != null) await unitOfWork.Enlist();
-                using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
                     rows = await cmd.ExecuteNonQueryAsync();
@@ -258,42 +235,10 @@ namespace SQLRepositoryAsync.Data.Repository
         }
 
         #region Ping
-        public async Task<bool> Ping()
+        public bool Ping()
         {
-            if (db.Connection.State != ConnectionState.Open)
-                await db.OpenConnection();
-
             //return true if open and false if closed
-            return db.Connection.State == ConnectionState.Open;
-        }
-        #endregion
-
-        #region Dispose
-        private bool disposed = false;
-        protected virtual void Dispose(bool disposing)
-        {
-            //We'll close here, if no UOW.  Otherwise, close when UOW disposed
-            if (unitOfWork == null)
-            {
-                if (!this.disposed)
-                {
-                    if (disposing)
-                    {
-                        if (db.Connection != null)
-                        {
-                            logger.LogInformation("Disposing of SQL Connection from Repository Base");
-                            db.Close();
-                            db.Connection.Dispose();
-                        }
-                    }
-                }
-                this.disposed = true;
-            }
-        }
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            return dbc.Connection.State == ConnectionState.Open;
         }
         #endregion
     }

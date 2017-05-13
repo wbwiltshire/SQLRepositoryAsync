@@ -17,6 +17,7 @@ namespace Regression.Test
         private SetupFixture fixture;
         private ILogger logger;
         private AppSettingsConfiguration settings;
+        private DBConnection dbc;
 
         public TransactionTests(SetupFixture f)
         {
@@ -28,23 +29,29 @@ namespace Regression.Test
         [Fact]
         public async Task UOWConnectionTest()
         {
-            UnitOfWork uow = new UnitOfWork(settings, logger);
-            StateRepository repos = new StateRepository(logger, uow);
-            Assert.True(await repos.Ping());
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            UnitOfWork uow = new UnitOfWork(dbc, logger);
+            StateRepository repos = new StateRepository(settings, logger, uow, dbc);
+            Assert.True(await dbc.Open());
 
-            repos.Dispose();
-            uow.Dispose();
+
+            Assert.True(repos.Ping());
+
+            dbc.Close();
         }
 
         [Fact]
         public async Task UpdateTest()
         {
-            ContactRepository contactRepos = new ContactRepository(settings, logger);
-            CityRepository cityRepos = new CityRepository(settings, logger);
-            StateRepository stateRepos = new StateRepository(settings, logger);
             string oldString = String.Empty;
             string updateString = String.Empty;
             int rows = 0;
+
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
+            CityRepository cityRepos = new CityRepository(settings, logger, dbc);
+            StateRepository stateRepos = new StateRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
 
             #region Update Contact Test
             oldString = "No notes";
@@ -85,20 +92,20 @@ namespace Regression.Test
             Assert.Equal(state.Name, updateString);
             #endregion
 
-            contactRepos.Dispose();
-            cityRepos.Dispose();
-            stateRepos.Dispose();
-
+            dbc.Close();
         }
 
         [Fact]
         public async Task AddTest()
         {
-            ContactRepository contactRepos = new ContactRepository(settings, logger);
-            CityRepository cityRepos = new CityRepository(settings, logger);
-            StateRepository stateRepos = new StateRepository(settings, logger);
             string skey = string.Empty;
             int key = 0;
+
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
+            CityRepository cityRepos = new CityRepository(settings, logger, dbc);
+            StateRepository stateRepos = new StateRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
 
             #region Add Contact Test
             Contact contact = new Contact()
@@ -150,19 +157,18 @@ namespace Regression.Test
             Assert.True(skey == newState.Id);
             Assert.NotNull(await stateRepos.FindByPK(new PrimaryKey() { Key = newState.Id }));
             #endregion
-
-            contactRepos.Dispose();
-            cityRepos.Dispose();
-            stateRepos.Dispose();
         }
 
         [Fact]
         public async Task DeleteTest()
         {
-            ContactRepository contactRepos = new ContactRepository(settings, logger);
-            CityRepository cityRepos = new CityRepository(settings, logger);
-            StateRepository stateRepos = new StateRepository(settings, logger);
             int rows = 0;
+
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
+            CityRepository cityRepos = new CityRepository(settings, logger, dbc);
+            StateRepository stateRepos = new StateRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
 
             #region Delete Contact Test
             Contact contact = await contactRepos.FindByPK(new PrimaryKey() { Key = 8 });
@@ -191,9 +197,7 @@ namespace Regression.Test
             Assert.Null(state);
             #endregion
 
-            contactRepos.Dispose();
-            cityRepos.Dispose();
-            stateRepos.Dispose();
+            dbc.Close();
         }
 
         [Fact]
@@ -215,8 +219,11 @@ namespace Regression.Test
                 CityId = 1
             };
 
-            UnitOfWork uow = new UnitOfWork(settings, logger);
-            ContactRepository repos = new ContactRepository(logger, uow);
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            UnitOfWork uow = new UnitOfWork(dbc, logger);
+            ContactRepository repos = new ContactRepository(settings, logger, uow, dbc);
+            Assert.True(await dbc.Open());
+
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
             contact.Notes = updateString;
             int rows = await repos.Update(contact);
@@ -230,8 +237,7 @@ namespace Regression.Test
             Assert.True(key > 0);
             Assert.NotNull(await repos.FindByPK(new PrimaryKey() { Key = key }));
 
-            repos.Dispose();
-            uow.Dispose();
+            dbc.Close();
         }
 
         [Fact]
@@ -240,8 +246,11 @@ namespace Regression.Test
             string updateString = "Rollback this update.";
             string oldNotes = String.Empty;
 
-            UnitOfWork uow = new UnitOfWork(settings, logger);
-            ContactRepository repos = new ContactRepository(logger, uow);
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            UnitOfWork uow = new UnitOfWork(dbc, logger);
+            ContactRepository repos = new ContactRepository(settings, logger, uow, dbc);
+            Assert.True(await dbc.Open());
+
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
             oldNotes = contact.Notes;
             contact.Notes = updateString;
@@ -250,9 +259,7 @@ namespace Regression.Test
             Assert.True(await uow.Rollback());
             contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
             Assert.Equal(contact.Notes, oldNotes);
-
-            repos.Dispose();
-            uow.Dispose();
+            dbc.Close();
         }
     }
 }

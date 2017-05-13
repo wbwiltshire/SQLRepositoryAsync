@@ -13,21 +13,16 @@ namespace SQLRepositoryAsync.Data.Repository
     public class UnitOfWork : IUOW
     {
         private readonly ILogger logger;
-        private DBConnection db;
-        private AppSettingsConfiguration settings;
+        private DBConnection dbc;
         private string CMDText;
         private int transactionCount;
 
-        public UnitOfWork(AppSettingsConfiguration s, ILogger l)
+        public UnitOfWork(DBConnection d, ILogger l)
         {
-            settings = s;
             logger = l;
             transactionCount = 0;
-            db = new DBConnection(settings.Database.ConnectionString, l);
+            dbc = d;
         }
-
-        public DBConnection DBconnection { get { return db; } }
-        public AppSettingsConfiguration Settings { get { return settings; } }
 
         public async Task<bool> Enlist() 
         {
@@ -40,12 +35,7 @@ namespace SQLRepositoryAsync.Data.Repository
             {
                 try
                 {
-                    if (db.Connection.State != ConnectionState.Open)
-                        await db.OpenConnection();
-
-                    logger.LogInformation($"ConnectionString: {Settings.Database.ConnectionString}");
-
-                    using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                    using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                     {
                         rows = await cmd.ExecuteNonQueryAsync();
                     }
@@ -75,7 +65,7 @@ namespace SQLRepositoryAsync.Data.Repository
             {
                 try
                 {
-                    using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                    using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                     {
                         rows = await cmd.ExecuteNonQueryAsync();
                         status = true;
@@ -111,7 +101,7 @@ namespace SQLRepositoryAsync.Data.Repository
             {
                 try
                 {
-                    using (SqlCommand cmd = new SqlCommand(CMDText, db.Connection))
+                    using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                     {
                         rows = await cmd.ExecuteNonQueryAsync();
                         status = true;
@@ -132,32 +122,5 @@ namespace SQLRepositoryAsync.Data.Repository
             return status;
         }
 
-        #region Dispose
-        private bool disposed = false;
-        protected virtual void Dispose(bool disposing)
-        {
-            //We'll close here, if UOW.  Otherwise, close in RepositoryBase
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    if (db.Connection != null)
-                    {
-                        logger.LogInformation("Disposing of SQL Connection from UOW");
-                        db.Close();
-                        db.Connection.Dispose();
-                    }
-                    //Nothing to do at this point;
-                    transactionCount = 0;
-                }
-            }
-            this.disposed = true;
-        }
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 }

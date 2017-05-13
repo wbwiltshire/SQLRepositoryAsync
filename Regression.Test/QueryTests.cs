@@ -17,6 +17,7 @@ namespace Regression.Test
         private SetupFixture fixture;
         private ILogger logger;
         private AppSettingsConfiguration settings;
+        private DBConnection dbc;
 
         //Fixture instantiated at the beginning of all the tests in this class and passed to constructor
         public QueryTests(SetupFixture f)
@@ -29,17 +30,22 @@ namespace Regression.Test
         [Fact]
         public async Task ConnectionTest()
         {
-            StateRepository repos = new StateRepository(settings, logger);
-            Assert.True(await repos.Ping());
-            repos.Dispose();
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            StateRepository repos = new StateRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
+
+            Assert.True(repos.Ping());
+            dbc.Close();
         }
 
         [Fact]
         public async Task FindAllTest()
         {
-            ContactRepository contactRepos = new ContactRepository(settings, logger);
-            CityRepository cityRepos = new CityRepository(settings, logger);
-            StateRepository stateRepos = new StateRepository(settings, logger);
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
+            CityRepository cityRepos = new CityRepository(settings, logger, dbc);
+            StateRepository stateRepos = new StateRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
 
             ICollection<Contact> contacts = await contactRepos.FindAll();
             Assert.NotEmpty(contacts);
@@ -48,17 +54,17 @@ namespace Regression.Test
             ICollection<State> states = await stateRepos.FindAll();
             Assert.NotEmpty(states);
 
-            contactRepos.Dispose();
-            cityRepos.Dispose();
-            stateRepos.Dispose();
+            dbc.Close();
         }
 
         [Fact]
         public async Task FindAllPagedTest()
         {
-            ContactRepository contactRepos = new ContactRepository(settings, logger);
-            CityRepository cityRepos = new CityRepository(settings, logger);
-            StateRepository stateRepos = new StateRepository(settings, logger);
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
+            CityRepository cityRepos = new CityRepository(settings, logger, dbc);
+            StateRepository stateRepos = new StateRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
 
             IPager<Contact> contacts = await contactRepos.FindAll(new Pager<Contact>() { PageNbr = 2, PageSize = 5 });
             Assert.NotNull(contacts);
@@ -73,16 +79,16 @@ namespace Regression.Test
             Assert.True(states.RowCount > 0);
             Assert.NotNull(states.Entities);
 
-            contactRepos.Dispose();
-            cityRepos.Dispose();
-            stateRepos.Dispose();
+            dbc.Close();
         }
 
         [Fact]
         public async Task FindAllViewTest()
         {
-            ContactRepository contactRepos = new ContactRepository(settings, logger);
-            CityRepository cityRepos = new CityRepository(settings, logger);
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
+            CityRepository cityRepos = new CityRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
 
             ICollection<Contact> contacts = await contactRepos.FindAllView();
             Assert.NotEmpty(contacts);
@@ -92,15 +98,16 @@ namespace Regression.Test
             Assert.NotEmpty(cities);
             Assert.NotNull(cities.FirstOrDefault().State);
 
-            contactRepos.Dispose();
-            cityRepos.Dispose();
+            dbc.Close();
         }
 
         [Fact]
         public async Task FindAllViewPagedTest()
         {
-            ContactRepository contactRepos = new ContactRepository(settings, logger);
-            CityRepository cityRepos = new CityRepository(settings, logger);
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
+            CityRepository cityRepos = new CityRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
 
             IPager<Contact> contacts = await contactRepos.FindAllView(new Pager<Contact>() { PageNbr = 2, PageSize = 5 });
             Assert.NotEmpty(contacts.Entities);
@@ -114,41 +121,47 @@ namespace Regression.Test
             Assert.NotNull(cities.Entities);
             Assert.NotNull(cities.Entities.FirstOrDefault().State);
 
-            contactRepos.Dispose();
-            cityRepos.Dispose();
+            dbc.Close();
         }
 
         [Fact]
         public async Task FindByPKAlphaTest()
         {
-            StateRepository repos = new StateRepository(settings, logger);
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            StateRepository repos = new StateRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
+
             State state = await repos.FindByPK(new PrimaryKey() { Key = "FL" });
             Assert.NotNull(state);
 
-            repos.Dispose();
+            dbc.Close();
         }
 
         [Fact]
         public async Task FindByPKNumericTest()
         {
-            ContactRepository repos = new ContactRepository(settings, logger);
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository repos = new ContactRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
+
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key =1 });
             Assert.NotNull(contact);
-
-            repos.Dispose();
         }
 
         [Fact]
         public async Task FindViewByPKTest()
         {
-            ContactRepository repos = new ContactRepository(settings, logger);
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository repos = new ContactRepository(settings, logger, dbc);
+            Assert.True(await dbc.Open());
+
             Contact contact = await repos.FindViewByPK(new PrimaryKey() { Key = 1 });
             Assert.NotNull(contact);
             Assert.True(contact.Id == 1);
             Assert.NotNull(contact.City);
             Assert.NotNull(contact.City.State);
 
-            repos.Dispose();
+            dbc.Close();
         }
 
     }

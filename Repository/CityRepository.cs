@@ -37,11 +37,11 @@ namespace SQLRepositoryAsync.Data.Repository
 
         #region ctor
         //Default constructor calls the base ctor
-        public CityRepository(AppSettingsConfiguration s, ILogger l) :
-            base(s, l)
+        public CityRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) :
+            base(s, l, d)
         { Init(); }
-        public CityRepository(ILogger l, UnitOfWork uow) :
-            base(l, uow)
+        public CityRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBConnection d) :
+            base(s, l, uow, d)
         { Init(); }
 
         private void Init()
