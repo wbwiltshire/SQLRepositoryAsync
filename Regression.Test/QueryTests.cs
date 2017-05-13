@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -31,10 +32,9 @@ namespace Regression.Test
         public async Task ConnectionTest()
         {
             Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
-            StateRepository repos = new StateRepository(settings, logger, dbc);
             Assert.True(await dbc.Open());
+            Assert.True(dbc.Connection.State == ConnectionState.Open);
 
-            Assert.True(repos.Ping());
             dbc.Close();
         }
 
@@ -45,7 +45,6 @@ namespace Regression.Test
             ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
             CityRepository cityRepos = new CityRepository(settings, logger, dbc);
             StateRepository stateRepos = new StateRepository(settings, logger, dbc);
-            Assert.True(await dbc.Open());
 
             ICollection<Contact> contacts = await contactRepos.FindAll();
             Assert.NotEmpty(contacts);
@@ -64,7 +63,6 @@ namespace Regression.Test
             ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
             CityRepository cityRepos = new CityRepository(settings, logger, dbc);
             StateRepository stateRepos = new StateRepository(settings, logger, dbc);
-            Assert.True(await dbc.Open());
 
             IPager<Contact> contacts = await contactRepos.FindAll(new Pager<Contact>() { PageNbr = 2, PageSize = 5 });
             Assert.NotNull(contacts);
@@ -88,7 +86,6 @@ namespace Regression.Test
             Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
             ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
             CityRepository cityRepos = new CityRepository(settings, logger, dbc);
-            Assert.True(await dbc.Open());
 
             ICollection<Contact> contacts = await contactRepos.FindAllView();
             Assert.NotEmpty(contacts);
@@ -107,7 +104,6 @@ namespace Regression.Test
             Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
             ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
             CityRepository cityRepos = new CityRepository(settings, logger, dbc);
-            Assert.True(await dbc.Open());
 
             IPager<Contact> contacts = await contactRepos.FindAllView(new Pager<Contact>() { PageNbr = 2, PageSize = 5 });
             Assert.NotEmpty(contacts.Entities);
@@ -129,7 +125,6 @@ namespace Regression.Test
         {
             Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
             StateRepository repos = new StateRepository(settings, logger, dbc);
-            Assert.True(await dbc.Open());
 
             State state = await repos.FindByPK(new PrimaryKey() { Key = "FL" });
             Assert.NotNull(state);
@@ -142,7 +137,6 @@ namespace Regression.Test
         {
             Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
             ContactRepository repos = new ContactRepository(settings, logger, dbc);
-            Assert.True(await dbc.Open());
 
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key =1 });
             Assert.NotNull(contact);
@@ -153,7 +147,6 @@ namespace Regression.Test
         {
             Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
             ContactRepository repos = new ContactRepository(settings, logger, dbc);
-            Assert.True(await dbc.Open());
 
             Contact contact = await repos.FindViewByPK(new PrimaryKey() { Key = 1 });
             Assert.NotNull(contact);

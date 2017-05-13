@@ -52,6 +52,9 @@ namespace SQLRepositoryAsync.Data.Repository
 
             try
             {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     //Returns an object, not an int
@@ -74,6 +77,9 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             try
             {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
@@ -99,6 +105,9 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             try
             {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -130,6 +139,9 @@ namespace SQLRepositoryAsync.Data.Repository
 
             try
             {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
                     cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
@@ -159,6 +171,9 @@ namespace SQLRepositoryAsync.Data.Repository
 
             try
             {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
                 if (unitOfWork != null) await unitOfWork.Enlist();
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
@@ -195,6 +210,9 @@ namespace SQLRepositoryAsync.Data.Repository
 
             try
             {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
                 if (unitOfWork != null) await unitOfWork.Enlist();
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
@@ -219,6 +237,9 @@ namespace SQLRepositoryAsync.Data.Repository
 
             try
             {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
                 if (unitOfWork != null) await unitOfWork.Enlist();
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
@@ -233,13 +254,5 @@ namespace SQLRepositoryAsync.Data.Repository
             logger.LogInformation($"Delete complete for {typeof(TEntity)} entity.");
             return rows;
         }
-
-        #region Ping
-        public bool Ping()
-        {
-            //return true if open and false if closed
-            return dbc.Connection.State == ConnectionState.Open;
-        }
-        #endregion
     }
 }

@@ -16,6 +16,12 @@ namespace SQLRepositoryAsync.Data.Interfaces
         bool IsIdentity { get; set; }
     }
 
+    public interface IDBConnection : IDisposable
+    {
+        Task<bool> Open();
+        void Close();
+    }
+
     public interface IUOW
     {
         Task<bool> Save();
@@ -31,7 +37,6 @@ namespace SQLRepositoryAsync.Data.Interfaces
         Task<object> Add(TEntity entity);
         Task<int> Update(TEntity entity);
         Task<int> Delete(PrimaryKey pk);
-        bool Ping();
     }
 
     public interface IMapToObject<TEntity>

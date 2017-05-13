@@ -57,8 +57,8 @@ namespace SQLRepositoryAsync.Data.Repository
 
             //TODO: Do I need to check connection state here?
             //ANSWER: No, if we don't have an open connection, we have bigger problems
-            //if (db.Connection.State != ConnectionState.Open)
-            //    await db.OpenConnection();
+            //if (dbc.Connection.State != ConnectionState.Open)
+            //    await dbc.Open();
 
             //Nothing to do if no transactions have enlisted
             if (transactionCount > 0)
@@ -94,8 +94,8 @@ namespace SQLRepositoryAsync.Data.Repository
 
             //TODO: Do I need to check connection state here?
             //ANSWER: No, if we don't have an open connection, we have bigger problems
-            //if (db.Connection.State != ConnectionState.Open)
-            //    await db.OpenConnection();
+            //if (dbc.Connection.State != ConnectionState.Open)
+            //    await dbc.Open();
 
             if (transactionCount > 0)
             {

@@ -5,14 +5,15 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using SQLRepositoryAsync.Data.Interfaces;
 
 namespace SQLRepositoryAsync.Data.Repository
 {
-    public class DBConnection
+    public class DBConnection : IDBConnection
     {
         private ILogger logger;
         private SqlConnection connection = null;
-        private static bool isOpen = false;
+        private bool isOpen = false;
 
         //ctor
         public DBConnection(string connectionString, ILogger l)
@@ -36,11 +37,6 @@ namespace SQLRepositoryAsync.Data.Repository
             get { return connection; }
         }
 
-        public static bool IsOpen
-        {
-            get { return isOpen; }
-        }
-
         public async Task<bool> Open()
         {
             //Only create a connection, if we don't already have one
@@ -57,7 +53,7 @@ namespace SQLRepositoryAsync.Data.Repository
                 }
             }
             else
-                logger.LogInformation("DBConnection already open.");
+                logger.LogInformation("Using open DBConnection.");
 
             return isOpen;
         }
@@ -78,5 +74,27 @@ namespace SQLRepositoryAsync.Data.Repository
                 logger.LogError(ex.Message);
             }
         }
+
+        #region Dispose
+        private bool disposed = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    if (connection != null)
+                        connection.Close();
+                    logger.LogInformation("DBConnection closed via dispose.");
+                }
+                this.disposed = true;
+            }
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }
