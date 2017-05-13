@@ -11,23 +11,19 @@ using Xunit;
 
 namespace Regression.Test
 {
+    [Collection("Test Collection")]
     public class QueryTests
     {
+        private SetupFixture fixture;
         private ILogger logger;
         private AppSettingsConfiguration settings;
-        private IConfigurationRoot config;
 
-        public QueryTests()
+        //Fixture instantiated at the beginning of all the tests in this class and passed to constructor
+        public QueryTests(SetupFixture f)
         {
-            ILoggerFactory logFactory = new LoggerFactory()
-                .AddDebug();
-            logger = logFactory.CreateLogger(typeof(QueryTests));
-
-            var builder = new ConfigurationBuilder().
-                AddJsonFile("appsettings.json");
-            config = builder.Build();
-            settings = new AppSettingsConfiguration();
-            ConfigurationBinder.Bind(config, settings);
+            fixture = f;
+            logger = f.Logger;
+            settings = f.Settings;
         }
 
         [Fact]
@@ -35,6 +31,7 @@ namespace Regression.Test
         {
             StateRepository repos = new StateRepository(settings, logger);
             Assert.True(await repos.Ping());
+            repos.Dispose();
         }
 
         [Fact]
@@ -50,6 +47,10 @@ namespace Regression.Test
             Assert.NotEmpty(cities);
             ICollection<State> states = await stateRepos.FindAll();
             Assert.NotEmpty(states);
+
+            contactRepos.Dispose();
+            cityRepos.Dispose();
+            stateRepos.Dispose();
         }
 
         [Fact]
@@ -72,6 +73,9 @@ namespace Regression.Test
             Assert.True(states.RowCount > 0);
             Assert.NotNull(states.Entities);
 
+            contactRepos.Dispose();
+            cityRepos.Dispose();
+            stateRepos.Dispose();
         }
 
         [Fact]
@@ -87,6 +91,9 @@ namespace Regression.Test
             ICollection<City> cities = await cityRepos.FindAllView();
             Assert.NotEmpty(cities);
             Assert.NotNull(cities.FirstOrDefault().State);
+
+            contactRepos.Dispose();
+            cityRepos.Dispose();
         }
 
         [Fact]
@@ -106,6 +113,9 @@ namespace Regression.Test
             Assert.True(cities.RowCount > 0);
             Assert.NotNull(cities.Entities);
             Assert.NotNull(cities.Entities.FirstOrDefault().State);
+
+            contactRepos.Dispose();
+            cityRepos.Dispose();
         }
 
         [Fact]
@@ -114,6 +124,8 @@ namespace Regression.Test
             StateRepository repos = new StateRepository(settings, logger);
             State state = await repos.FindByPK(new PrimaryKey() { Key = "FL" });
             Assert.NotNull(state);
+
+            repos.Dispose();
         }
 
         [Fact]
@@ -122,6 +134,8 @@ namespace Regression.Test
             ContactRepository repos = new ContactRepository(settings, logger);
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key =1 });
             Assert.NotNull(contact);
+
+            repos.Dispose();
         }
 
         [Fact]
@@ -133,6 +147,8 @@ namespace Regression.Test
             Assert.True(contact.Id == 1);
             Assert.NotNull(contact.City);
             Assert.NotNull(contact.City.State);
+
+            repos.Dispose();
         }
 
     }

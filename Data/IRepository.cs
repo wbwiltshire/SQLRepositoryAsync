@@ -16,6 +16,12 @@ namespace SQLRepositoryAsync.Data.Interfaces
         bool IsIdentity { get; set; }
     }
 
+    public interface IUOW : IDisposable
+    {
+        Task<bool> Save();
+        Task<bool> Rollback();
+    }
+
     public interface IRepository<TEntity> : IDisposable
         where TEntity : class
     {
@@ -25,8 +31,6 @@ namespace SQLRepositoryAsync.Data.Interfaces
         Task<object> Add(TEntity entity);
         Task<int> Update(TEntity entity);
         Task<int> Delete(PrimaryKey pk);
-        Task<bool> Save();
-        Task<bool> Rollback();
         Task<bool> Ping();
     }
 

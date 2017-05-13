@@ -11,23 +11,18 @@ using Xunit;
 
 namespace Regression.Test
 {
+    [Collection("Test Collection")]
     public class TransactionTests
     {
+        private SetupFixture fixture;
         private ILogger logger;
         private AppSettingsConfiguration settings;
-        private IConfigurationRoot config;
 
-        public TransactionTests()
+        public TransactionTests(SetupFixture f)
         {
-            ILoggerFactory logFactory = new LoggerFactory()
-                .AddDebug();
-            logger = logFactory.CreateLogger(typeof(TransactionTests));
-
-            var builder = new ConfigurationBuilder().
-                AddJsonFile("appsettings.json");
-            config = builder.Build();
-            settings = new AppSettingsConfiguration();
-            ConfigurationBinder.Bind(config, settings);
+            fixture = f;
+            logger = f.Logger;
+            settings = f.Settings;
         }
 
         [Fact]
@@ -36,6 +31,9 @@ namespace Regression.Test
             UnitOfWork uow = new UnitOfWork(settings, logger);
             StateRepository repos = new StateRepository(logger, uow);
             Assert.True(await repos.Ping());
+
+            repos.Dispose();
+            uow.Dispose();
         }
 
         [Fact]
@@ -86,6 +84,10 @@ namespace Regression.Test
             state = await stateRepos.FindByPK(new PrimaryKey() { Key = "00" });
             Assert.Equal(state.Name, updateString);
             #endregion
+
+            contactRepos.Dispose();
+            cityRepos.Dispose();
+            stateRepos.Dispose();
 
         }
 
@@ -148,6 +150,10 @@ namespace Regression.Test
             Assert.True(skey == newState.Id);
             Assert.NotNull(await stateRepos.FindByPK(new PrimaryKey() { Key = newState.Id }));
             #endregion
+
+            contactRepos.Dispose();
+            cityRepos.Dispose();
+            stateRepos.Dispose();
         }
 
         [Fact]
@@ -184,6 +190,10 @@ namespace Regression.Test
             state = await stateRepos.FindByPK(new PrimaryKey() { Key = "WA" });
             Assert.Null(state);
             #endregion
+
+            contactRepos.Dispose();
+            cityRepos.Dispose();
+            stateRepos.Dispose();
         }
 
         [Fact]
@@ -214,11 +224,14 @@ namespace Regression.Test
             ICollection<Contact> contacts = await repos.FindAll();
             Assert.Null(contacts.Where(c => c.LastName == newContact.LastName && c.FirstName == newContact.FirstName).FirstOrDefault());
             int key = (int)await repos.Add(newContact);
-            await repos.Save();
+            Assert.True(await uow.Save());
             contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
             Assert.Equal(contact.Notes, updateString);
             Assert.True(key > 0);
             Assert.NotNull(await repos.FindByPK(new PrimaryKey() { Key = key }));
+
+            repos.Dispose();
+            uow.Dispose();
         }
 
         [Fact]
@@ -234,9 +247,12 @@ namespace Regression.Test
             contact.Notes = updateString;
             int rows = await repos.Update(contact);
             Assert.Equal(rows, 1);
-            await repos.Rollback();
+            Assert.True(await uow.Rollback());
             contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
             Assert.Equal(contact.Notes, oldNotes);
+
+            repos.Dispose();
+            uow.Dispose();
         }
     }
 }
