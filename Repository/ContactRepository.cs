@@ -29,18 +29,21 @@ namespace SQLRepositoryAsync.Data.Repository
         private const string ADD_PROC = "uspAddContact";
         private const string UPDATE_PROC = "uspUpdateContact";
 
+        private ILogger logger;
+
         #region ctor
         //Default constructor calls the base ctor
         public ContactRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) :
             base(s, l, d)
-        { Init(); }
+        { Init(l); }
         public ContactRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBConnection d) :
             base(s, l, uow, d)
-        { Init(); }
+        { Init(l); }
 
 
-        private void Init()
+        private void Init(ILogger l)
         {
+            logger = l;
             //Mapper = new ContactMapper();
             OrderBy = "Id";
         }
@@ -51,7 +54,7 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             CMDText = FINDALL_STMT;
             CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new ContactMapToObject();
+            MapToObject = new ContactMapToObject(logger);
             return await base.FindAll();
         }
         #endregion
@@ -62,7 +65,7 @@ namespace SQLRepositoryAsync.Data.Repository
             string storedProcedure = String.Empty;
 
             //CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new ContactMapToObject();
+            MapToObject = new ContactMapToObject(logger);
 
             storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDPROC);
             if (storedProcedure == null)
@@ -89,7 +92,7 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             CMDText = FINDALLVIEW_STMT;
             CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new ContactMapToObjectView();
+            MapToObject = new ContactMapToObjectView(logger);
             return await base.FindAll();        
         }
         #endregion
@@ -100,7 +103,7 @@ namespace SQLRepositoryAsync.Data.Repository
             string storedProcedure = String.Empty;
 
             //CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new ContactMapToObjectView();
+            MapToObject = new ContactMapToObjectView(logger);
 
             storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDVIEWPROC);
             if (storedProcedure == null)
@@ -126,7 +129,7 @@ namespace SQLRepositoryAsync.Data.Repository
         public override async Task<Contact> FindByPK(IPrimaryKey pk)
         {
             CMDText = FINDBYPK_STMT;
-            MapToObject = new ContactMapToObject();
+            MapToObject = new ContactMapToObject(logger);
             return await base.FindByPK(pk);
         }
         #endregion
@@ -135,7 +138,7 @@ namespace SQLRepositoryAsync.Data.Repository
         public async Task<Contact> FindViewByPK(IPrimaryKey pk)
         {
             CMDText = FINDBYPKVIEW_STMT;
-            MapToObject = new ContactMapToObjectView();
+            MapToObject = new ContactMapToObjectView(logger);
             return await base.FindByPK(pk);
         }
         #endregion
@@ -158,7 +161,7 @@ namespace SQLRepositoryAsync.Data.Repository
                 SqlCommandType = Constants.DBCommandType.SPROC;
                 CMDText = storedProcedure;
             }
-            MapFromObject = new ContactMapFromObject();
+            MapFromObject = new ContactMapFromObject(logger);
             result = await base.Add(entity, entity.PK);
             if (result != null)
                 key = Convert.ToInt32(result);
@@ -183,7 +186,7 @@ namespace SQLRepositoryAsync.Data.Repository
                 SqlCommandType = Constants.DBCommandType.SPROC;
                 CMDText = storedProcedure;
             }
-            MapFromObject = new ContactMapFromObject();
+            MapFromObject = new ContactMapFromObject(logger);
             return await base.Update(entity, entity.PK);
         }
         #endregion

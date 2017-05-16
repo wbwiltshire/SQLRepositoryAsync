@@ -24,12 +24,22 @@ namespace SQLRepositoryAsync.Data
     {
         protected readonly ILogger logger;
 
+        protected MapToObjectBase(ILogger l)
+        {
+            logger = l;
+        }
+
         public abstract TEntity Execute(IDataReader reader);
     }
     public abstract class MapFromObjectBase<TEntity> : IMapFromObject<TEntity>
         where TEntity : class
     {
         protected readonly ILogger logger;
+
+        protected MapFromObjectBase(ILogger l)
+        {
+            logger = l;
+        }
 
         public abstract void Execute(TEntity entity, SqlCommand cmd);
     }

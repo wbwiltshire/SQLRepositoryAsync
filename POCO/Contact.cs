@@ -63,6 +63,11 @@ namespace SQLRepositoryAsync.Data.POCO
 
     public class ContactMapToObject : MapToObjectBase<Contact>, IMapToObject<Contact>
 	{
+        public ContactMapToObject(ILogger l) : base(l)
+        {
+
+        }
+
         public override Contact Execute(IDataReader reader)
 		{
             Contact contact = new Contact();
@@ -118,9 +123,13 @@ namespace SQLRepositoryAsync.Data.POCO
 
     public class ContactMapToObjectView : MapToObjectBase<Contact>, IMapToObject<Contact>
     {
+        public ContactMapToObjectView(ILogger l) : base(l)
+        {
+        }
+
         public override Contact Execute(IDataReader reader)
         {
-            IMapToObject<Contact> map = new ContactMapToObject();
+            IMapToObject<Contact> map = new ContactMapToObject(logger);
             Contact contact = map.Execute(reader);
 
             try
@@ -146,6 +155,10 @@ namespace SQLRepositoryAsync.Data.POCO
 
     public class ContactMapFromObject : MapFromObjectBase<Contact>, IMapFromObject<Contact>
     {
+        public ContactMapFromObject(ILogger l) : base(l)
+        {
+        }
+
         public override void Execute(Contact contact, SqlCommand cmd)
         {
             SqlParameter parm;

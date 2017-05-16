@@ -44,6 +44,10 @@ namespace SQLRepositoryAsync.Data.POCO
 
     public class CityMapToObject : MapToObjectBase<City>, IMapToObject<City>
     {
+        public CityMapToObject(ILogger l) : base(l)
+        {
+        }
+
         public override City Execute(IDataReader reader)
         {
             City city = new City();
@@ -73,10 +77,14 @@ namespace SQLRepositoryAsync.Data.POCO
     }
     public class CityMapToObjectView : MapToObjectBase<City>, IMapToObject<City>
     {
-        
+        public CityMapToObjectView(ILogger l) : base(l)
+        {
+
+        }
+
         public override City Execute(IDataReader reader)
         {
-            IMapToObject<City> map = new CityMapToObject();
+            IMapToObject<City> map = new CityMapToObject(logger);
             City city = map.Execute(reader);
 
             try
@@ -97,6 +105,10 @@ namespace SQLRepositoryAsync.Data.POCO
 
     public class CityMapFromObject : MapFromObjectBase<City>, IMapFromObject<City>
     {
+        public CityMapFromObject(ILogger l) : base(l)
+        {
+        }
+
         public override void Execute(City city, SqlCommand cmd)
         {
             SqlParameter parm;

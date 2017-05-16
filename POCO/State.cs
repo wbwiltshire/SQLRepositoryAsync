@@ -39,6 +39,10 @@ namespace SQLRepositoryAsync.Data.POCO
 
     public class StateMapToObject : MapToObjectBase<State>, IMapToObject<State>
     {
+        public StateMapToObject(ILogger l) : base(l)
+        {
+        }
+
         public override State Execute(IDataReader reader)
         {
             State state = new State();
@@ -65,6 +69,9 @@ namespace SQLRepositoryAsync.Data.POCO
     }
     public class StateMapToObjectView : MapToObjectBase<State>, IMapToObject<State>
     {
+        public StateMapToObjectView(ILogger l) : base(l)
+        {
+        }
 
         public override State Execute(IDataReader reader)
         {
@@ -73,6 +80,10 @@ namespace SQLRepositoryAsync.Data.POCO
     }
     public class StateMapFromObject : MapFromObjectBase<State>, IMapFromObject<State>
     {
+        public StateMapFromObject(ILogger l) : base(l)
+        {
+        }
+
         public override void Execute(State state, SqlCommand cmd)
         {
             SqlParameter parm;

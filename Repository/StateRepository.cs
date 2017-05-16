@@ -30,17 +30,20 @@ namespace SQLRepositoryAsync.Data.Repository
         private const string ADD_PROC = "uspAddState";
         private const string UPDATE_PROC = "uspUpdateState";
 
+        private ILogger logger;
+
         #region ctor
         //Default constructor calls the base ctor
         public StateRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) :
             base(s, l, d)
-        { Init(); }
+        { Init(l); }
         public StateRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBConnection d) :
             base(s, l, uow, d)
-        { Init(); }
+        { Init(l); }
 
-        private void Init()
+        private void Init(ILogger l)
         {
+            logger = l;
             //Mapper = new StateMapper();
             OrderBy = "Id";
         }
@@ -51,7 +54,7 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             CMDText = FINDALL_STMT;
             CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new StateMapToObject();
+            MapToObject = new StateMapToObject(logger);
             return await base.FindAll();
         }
         #endregion
@@ -61,7 +64,7 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             CMDText = String.Format(FINDALLPAGER_STMT, pager.PageSize * pager.PageNbr, pager.PageSize);
             //CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new StateMapToObject();
+            MapToObject = new StateMapToObject(logger);
             pager.Entities = await base.FindAll();
             CMDText = FINDALLCOUNT_STMT;
             pager.RowCount = await base.FindAllCount();
@@ -73,7 +76,7 @@ namespace SQLRepositoryAsync.Data.Repository
         public override async Task<State> FindByPK(IPrimaryKey pk)
         {
             CMDText = FINDBYPK_STMT;
-            MapToObject = new StateMapToObject();
+            MapToObject = new StateMapToObject(logger);
             return await base.FindByPK(pk);
         }
         #endregion
@@ -96,7 +99,7 @@ namespace SQLRepositoryAsync.Data.Repository
                 SqlCommandType = Constants.DBCommandType.SPROC;
                 CMDText = storedProcedure;
             }
-            MapFromObject = new StateMapFromObject();
+            MapFromObject = new StateMapFromObject(logger);
             result = await base.Add(entity, entity.PK);
             if (result != null)
                 key = (string)result;
@@ -122,7 +125,7 @@ namespace SQLRepositoryAsync.Data.Repository
                 SqlCommandType = Constants.DBCommandType.SPROC;
                 CMDText = storedProcedure;
             }
-            MapFromObject = new StateMapFromObject();
+            MapFromObject = new StateMapFromObject(logger);
             return await base.Update(entity, entity.PK);
         }
         #endregion

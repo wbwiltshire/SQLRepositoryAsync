@@ -35,17 +35,20 @@ namespace SQLRepositoryAsync.Data.Repository
         private const string ADD_PROC = "uspAddCity";
         private const string UPDATE_PROC = "uspUpdateCity";
 
+        private ILogger logger;
+
         #region ctor
         //Default constructor calls the base ctor
         public CityRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) :
             base(s, l, d)
-        { Init(); }
+        { Init(l); }
         public CityRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBConnection d) :
             base(s, l, uow, d)
-        { Init(); }
+        { Init(l); }
 
-        private void Init()
+        private void Init(ILogger l)
         {
+            logger = l;
             //Mapper = new CityMapper();
             OrderBy = "Id";
         }
@@ -56,7 +59,7 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             CMDText = FINDALL_STMT;
             CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new CityMapToObject();
+            MapToObject = new CityMapToObject(logger);
             return await base.FindAll();
         }
         #endregion
@@ -67,7 +70,7 @@ namespace SQLRepositoryAsync.Data.Repository
             string storedProcedure = String.Empty;
 
             //CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new CityMapToObject();
+            MapToObject = new CityMapToObject(logger);
 
             storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDPROC);
             if (storedProcedure == null)
@@ -94,7 +97,7 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             CMDText = FINDALLVIEW_STMT;
             //CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new CityMapToObjectView();
+            MapToObject = new CityMapToObjectView(logger);
             return await base.FindAll();
         }
         #endregion
@@ -105,7 +108,7 @@ namespace SQLRepositoryAsync.Data.Repository
             string storedProcedure = String.Empty;
 
             //CMDText += ORDERBY_STMT + OrderBy;
-            MapToObject = new CityMapToObjectView();
+            MapToObject = new CityMapToObjectView(logger);
 
             storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDVIEWPROC);
             if (storedProcedure == null)
@@ -131,7 +134,7 @@ namespace SQLRepositoryAsync.Data.Repository
         public override async Task<City> FindByPK(IPrimaryKey pk)
         {
             CMDText = FINDBYPK_STMT;
-            MapToObject = new CityMapToObject();
+            MapToObject = new CityMapToObject(logger);
             return await base.FindByPK(pk);
         }
         #endregion
@@ -154,7 +157,7 @@ namespace SQLRepositoryAsync.Data.Repository
                 SqlCommandType = Constants.DBCommandType.SPROC;
                 CMDText = storedProcedure;
             }
-            MapFromObject = new CityMapFromObject();
+            MapFromObject = new CityMapFromObject(logger);
             result = await base.Add(entity, entity.PK);
             if (result != null)
                 key = Convert.ToInt32(result);
@@ -178,7 +181,7 @@ namespace SQLRepositoryAsync.Data.Repository
                 SqlCommandType = Constants.DBCommandType.SPROC;
                 CMDText = storedProcedure;
             }
-            MapFromObject = new CityMapFromObject();
+            MapFromObject = new CityMapFromObject(logger);
             return await base.Update(entity, entity.PK);
         }
         #endregion
