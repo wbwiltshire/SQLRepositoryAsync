@@ -231,6 +231,27 @@ CREATE PROCEDURE uspUpdateState
 AS
 BEGIN
 	UPDATE State SET Name=@p1, Active=1, ModifiedDt=GETDATE() 
-		WHERE Id =@pk AND Active=1
+		WHERE Id = @pk AND Active=1
+END
+GO
+--Testing Stored Procedures
+--
+
+IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspStoredProc')
+	DROP PROCEDURE [dbo].[uspStoredProc]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE uspStoredProc
+	@pk CHAR(2)			-- Primary Key
+	
+AS
+BEGIN
+	UPDATE Contact SET ModifiedDt=GETDATE() 
+		WHERE Id = @pk AND Active=1
 END
 GO

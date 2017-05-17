@@ -157,5 +157,26 @@ namespace Regression.Test
             dbc.Close();
         }
 
+        [Fact]
+        public async Task ExecNonQueryTest()
+        {
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository repos = new ContactRepository(settings, logger, dbc);
+
+            Assert.True(await repos.NonQuery() > 1);
+
+            dbc.Close();
+        }
+
+        [Fact]
+        public async Task ExecStoredProcTest()
+        {
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
+
+            Assert.True(await contactRepos.StoredProc(1) == 1);
+
+            dbc.Close();
+        }
     }
 }

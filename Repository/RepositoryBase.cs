@@ -254,5 +254,69 @@ namespace SQLRepositoryAsync.Data.Repository
             logger.LogInformation($"Delete complete for {typeof(TEntity)} entity.");
             return rows;
         }
+
+
+        #region ExecNonQuery
+        protected async Task<int> ExecNonQuery(IList<SqlParameter> p)
+        {
+            object cnt;
+
+            try
+            {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                {
+                    foreach (SqlParameter s in p)
+                        cmd.Parameters.Add(s);
+
+                    //Returns an object, not an int
+                    cnt = await cmd.ExecuteScalarAsync();
+                    logger.LogInformation("ExecNonQuery complete.");
+                    if (cnt != null)
+                        return Convert.ToInt32(cnt);
+                    else
+                        return 0;
+                }
+            }
+            catch (SqlException ex)
+            {
+                logger.LogError(ex.Message);
+                return 0;
+            }
+        }
+        #endregion
+
+        #region ExecStoredProc
+        protected async Task<int> ExecStoredProc(IList<SqlParameter> p)
+        {
+            int cnt = 0;
+
+            try
+            {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
+
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    foreach (SqlParameter s in p)
+                        cmd.Parameters.Add(s);
+
+                    cnt = await cmd.ExecuteNonQueryAsync();
+                    logger.LogInformation("ExecStoredProc complete.");
+                }
+            }
+            catch (SqlException ex)
+            {
+                logger.LogError(ex.Message);
+                return 0;
+            }
+            return cnt;
+        }
+        #endregion
+
     }
 }

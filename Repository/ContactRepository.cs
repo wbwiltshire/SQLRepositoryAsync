@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,6 +29,8 @@ namespace SQLRepositoryAsync.Data.Repository
         private const string FINDALL_PAGEDVIEWPROC = "uspFindAllContactViewPaged";
         private const string ADD_PROC = "uspAddContact";
         private const string UPDATE_PROC = "uspUpdateContact";
+        private const string NONQUERY_PROC = "uspNonQuery";
+        private const string STORED_PROC = "uspStoredProc";
 
         private ILogger logger;
 
@@ -196,6 +199,56 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             CMDText = DELETE_STMT;
             return await base.Delete(pk);
+        }
+        #endregion
+
+        #region ExecNonQuery
+        public async Task<int> NonQuery()
+        {
+            int rows = 0;
+            string storedProcedure = String.Empty;
+            IList<SqlParameter> parms = new List<SqlParameter>();
+
+            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == NONQUERY_PROC);
+            if (storedProcedure == null)
+            {
+                SqlCommandType = Constants.DBCommandType.SQL;
+                CMDText = FINDALLCOUNT_STMT;
+                rows = await base.ExecNonQuery(parms);
+            }
+            else
+            {
+                CMDText = storedProcedure;
+                SqlCommandType = Constants.DBCommandType.SPROC;
+                rows = await base.ExecNonQuery(parms);
+            }
+            return rows;
+        }
+        #endregion
+
+        #region ExecStoredProc
+        public async Task<int> StoredProc(int id)
+        {
+            int rows = 0;
+            string storedProcedure = String.Empty;
+            IList<SqlParameter> parms = new List<SqlParameter>();
+
+            storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == STORED_PROC);
+            if (storedProcedure == null)
+            {
+                CMDText = STORED_PROC;
+                SqlCommandType = Constants.DBCommandType.SPROC;
+                parms.Add(new SqlParameter("@pk", id));
+                rows = await base.ExecStoredProc(parms);
+            }
+            else
+            {
+                CMDText = storedProcedure;
+                SqlCommandType = Constants.DBCommandType.SPROC;
+                parms.Add(new SqlParameter("@pk", id));
+                rows = await base.ExecStoredProc(parms);
+            }
+            return rows;
         }
         #endregion
     }
