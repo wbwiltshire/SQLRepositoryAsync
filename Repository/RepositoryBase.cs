@@ -259,7 +259,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region ExecNonQuery
         protected async Task<int> ExecNonQuery(IList<SqlParameter> p)
         {
-            object cnt;
+            int rows = 0;
 
             try
             {
@@ -268,23 +268,24 @@ namespace SQLRepositoryAsync.Data.Repository
 
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
+                    if (SqlCommandType == Constants.DBCommandType.SPROC)
+                        cmd.CommandType = CommandType.StoredProcedure;
+
                     foreach (SqlParameter s in p)
                         cmd.Parameters.Add(s);
 
                     //Returns an object, not an int
-                    cnt = await cmd.ExecuteScalarAsync();
+                    rows = await cmd.ExecuteNonQueryAsync();
                     logger.LogInformation("ExecNonQuery complete.");
-                    if (cnt != null)
-                        return Convert.ToInt32(cnt);
-                    else
-                        return 0;
                 }
             }
             catch (SqlException ex)
             {
                 logger.LogError(ex.Message);
-                return 0;
+                rows = 0;
             }
+
+            return rows;
         }
         #endregion
 
