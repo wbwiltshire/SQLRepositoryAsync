@@ -22,7 +22,6 @@ namespace Regression.Test
             ConfigurationBinder.Bind(config, settings);
 
             ILoggerFactory logFactory = new LoggerFactory()
-                .AddDebug()
                 .AddFile(config.GetSection("Logging"));
             logger = logFactory.CreateLogger(typeof(QueryTests));
         }
