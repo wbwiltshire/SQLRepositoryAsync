@@ -31,7 +31,7 @@ namespace SQLRepositoryAsync.Data.Repository
         private const string UPDATE_PROC = "uspUpdateContact";
         private const string NONQUERY_PROC = "uspNonQuery";
         private const string STORED_PROC = "uspStoredProc";
-
+        private const string NONQUERY_TEST = "UPDATE Contact SET ModifiedDt=GETDATE();";
         private ILogger logger;
 
         #region ctor
@@ -213,7 +213,7 @@ namespace SQLRepositoryAsync.Data.Repository
             if (storedProcedure == null)
             {
                 SqlCommandType = Constants.DBCommandType.SQL;
-                CMDText = FINDALLCOUNT_STMT;
+                CMDText = NONQUERY_TEST;
                 rows = await base.ExecNonQuery(parms);
             }
             else

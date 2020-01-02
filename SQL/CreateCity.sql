@@ -1,4 +1,4 @@
-USE [Customer]
+USE [DCustomer]
 GO
 
 /****** Object: Table [dbo].[City] Script Date: 5/18/2014 9:09:33 AM ******/

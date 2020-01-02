@@ -1,0 +1,70 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Regression.Test", "Regression.Test\Regression.Test.csproj", "{CBF96D77-6542-4370-9CE0-0CE1088DE203}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EECA8CE6-F7F5-499E-BCAD-242AAF3DC440}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{D9ECA2D4-354D-4DAA-BB46-371710F901DD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "POCO", "POCO\POCO.csproj", "{1E23DC3C-3B09-4642-B3E5-81070920E752}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repository", "Repository\Repository.csproj", "{2C2D949B-9618-4EA2-BCAC-95FEB77A7058}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL", "SQL", "{74A37186-F1F2-4A97-8A4D-9668A022C2CB}"
+	ProjectSection(SolutionItems) = preProject
+		SQL\CreateCity.sql = SQL\CreateCity.sql
+		SQL\CreateContact.sql = SQL\CreateContact.sql
+		SQL\CreateForeignKeyConstraints.sql = SQL\CreateForeignKeyConstraints.sql
+		SQL\CreateState.sql = SQL\CreateState.sql
+		SQL\CreateStoredProcedures.sql = SQL\CreateStoredProcedures.sql
+		SQL\CreateTables.cmd = SQL\CreateTables.cmd
+		SQL\CreateViews.sql = SQL\CreateViews.sql
+		SQL\DropForeignKeyConstraints.sql = SQL\DropForeignKeyConstraints.sql
+		SQL\DropTables.sql = SQL\DropTables.sql
+		SQL\ExportData.cmd = SQL\ExportData.cmd
+		SQL\GrantStoredProcedureExecutePermissions.sql = SQL\GrantStoredProcedureExecutePermissions.sql
+		SQL\LoadData.cmd = SQL\LoadData.cmd
+		SQL\Queries.sql = SQL\Queries.sql
+		SQL\ReloadDatabase.cmd = SQL\ReloadDatabase.cmd
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CBF96D77-6542-4370-9CE0-0CE1088DE203}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBF96D77-6542-4370-9CE0-0CE1088DE203}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBF96D77-6542-4370-9CE0-0CE1088DE203}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBF96D77-6542-4370-9CE0-0CE1088DE203}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9ECA2D4-354D-4DAA-BB46-371710F901DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9ECA2D4-354D-4DAA-BB46-371710F901DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9ECA2D4-354D-4DAA-BB46-371710F901DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9ECA2D4-354D-4DAA-BB46-371710F901DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E23DC3C-3B09-4642-B3E5-81070920E752}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E23DC3C-3B09-4642-B3E5-81070920E752}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E23DC3C-3B09-4642-B3E5-81070920E752}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E23DC3C-3B09-4642-B3E5-81070920E752}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C2D949B-9618-4EA2-BCAC-95FEB77A7058}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C2D949B-9618-4EA2-BCAC-95FEB77A7058}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C2D949B-9618-4EA2-BCAC-95FEB77A7058}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C2D949B-9618-4EA2-BCAC-95FEB77A7058}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D9ECA2D4-354D-4DAA-BB46-371710F901DD} = {EECA8CE6-F7F5-499E-BCAD-242AAF3DC440}
+		{1E23DC3C-3B09-4642-B3E5-81070920E752} = {EECA8CE6-F7F5-499E-BCAD-242AAF3DC440}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1820B702-49AD-43D6-80F3-7F353D8D7BD0}
+	EndGlobalSection
+EndGlobal

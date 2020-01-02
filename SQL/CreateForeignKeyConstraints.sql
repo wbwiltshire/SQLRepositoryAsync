@@ -1,4 +1,4 @@
-USE [Customer]
+USE [DCustomer]
 GO
 
 SET ANSI_PADDING OFF

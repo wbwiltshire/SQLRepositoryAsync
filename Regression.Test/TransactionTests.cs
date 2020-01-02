@@ -61,7 +61,7 @@ namespace Regression.Test
                 Assert.Equal(contact.Notes, oldString);
                 contact.Notes = updateString;
                 rows = await contactRepos.Update(contact);
-                Assert.Equal(rows, 1);
+                Assert.Equal(1, rows);
                 contact = await contactRepos.FindByPK(new PrimaryKey() { Key = 1 });
                 Assert.Equal(contact.Notes, updateString);
                 #endregion
@@ -74,7 +74,7 @@ namespace Regression.Test
                 Assert.Equal(city.Name, oldString);
                 city.Name = updateString;
                 rows = await cityRepos.Update(city);
-                Assert.Equal(rows, 1);
+                Assert.Equal(1, rows);
                 city = await cityRepos.FindByPK(new PrimaryKey() { Key = 1 });
                 Assert.Equal(city.Name, updateString);
                 #endregion
@@ -87,7 +87,7 @@ namespace Regression.Test
                 Assert.Equal(state.Name, oldString);
                 state.Name = updateString;
                 rows = await stateRepos.Update(state);
-                Assert.Equal(rows, 1);
+                Assert.Equal(1, rows);
                 state = await stateRepos.FindByPK(new PrimaryKey() { Key = "00" });
                 Assert.Equal(state.Name, updateString);
                 #endregion
@@ -177,7 +177,7 @@ namespace Regression.Test
                 Contact contact = await contactRepos.FindByPK(new PrimaryKey() { Key = 8 });
                 Assert.NotNull(contact);
                 rows = await contactRepos.Delete(new PrimaryKey() { Key = 8 });
-                Assert.Equal(rows, 1);
+                Assert.Equal(1, rows);
                 contact = await contactRepos.FindByPK(new PrimaryKey() { Key = 8 });
                 Assert.Null(contact);
                 #endregion
@@ -186,7 +186,7 @@ namespace Regression.Test
                 City city = await cityRepos.FindByPK(new PrimaryKey() { Key = 17 });
                 Assert.NotNull(city);
                 rows = await cityRepos.Delete(new PrimaryKey() { Key = 17 });
-                Assert.Equal(rows, 1);
+                Assert.Equal(1, rows);
                 city = await cityRepos.FindByPK(new PrimaryKey() { Key = 17 });
                 Assert.Null(city);
                 #endregion
@@ -195,7 +195,7 @@ namespace Regression.Test
                 State state = await stateRepos.FindByPK(new PrimaryKey() { Key = "WA" });
                 Assert.NotNull(state);
                 rows = await stateRepos.Delete(new PrimaryKey() { Key = "WA" });
-                Assert.Equal(rows, 1);
+                Assert.Equal(1, rows);
                 state = await stateRepos.FindByPK(new PrimaryKey() { Key = "WA" });
                 Assert.Null(state);
                 #endregion
@@ -231,7 +231,7 @@ namespace Regression.Test
                 Contact contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
                 contact.Notes = updateString;
                 int rows = await repos.Update(contact);
-                Assert.Equal(rows, 1);
+                Assert.Equal(1, rows);
                 ICollection<Contact> contacts = await repos.FindAll();
                 Assert.Null(contacts.Where(c => c.LastName == newContact.LastName && c.FirstName == newContact.FirstName).FirstOrDefault());
                 int key = (int)await repos.Add(newContact);
@@ -260,7 +260,7 @@ namespace Regression.Test
                 oldNotes = contact.Notes;
                 contact.Notes = updateString;
                 int rows = await repos.Update(contact);
-                Assert.Equal(rows, 1);
+                Assert.Equal(1, rows);
                 Assert.True(await uow.Rollback());
                 contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
                 Assert.Equal(contact.Notes, oldNotes);
