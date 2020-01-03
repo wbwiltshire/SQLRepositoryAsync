@@ -141,6 +141,17 @@ namespace Regression.Test
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key =1 });
             Assert.NotNull(contact);
         }
+        [Fact]
+        public async Task FindByCompositeTest()
+        {
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ContactRepository repos = new ContactRepository(settings, logger, dbc);
+            int id1 = 1;
+            int id2 = 2;
+
+            Contact contact = await repos.FindByPK(new PrimaryKey() { CompositeKey = new object[] { id1, id2 }, IsComposite = true });
+            Assert.NotNull(contact);
+        }
 
         [Fact]
         public async Task FindViewByPKTest()

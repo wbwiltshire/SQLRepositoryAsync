@@ -21,4 +21,18 @@ BEGIN
 	ALTER TABLE [dbo].[Contact] CHECK CONSTRAINT [FK_Contact_City]
 END
 GO
+
+IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME='ProjectContact')
+BEGIN
+	ALTER TABLE [dbo].[ProjectContact]  WITH CHECK ADD CONSTRAINT [FK_ProjectContact_Project] FOREIGN KEY([ProjectId])
+		REFERENCES [dbo].[Project] ([Id])
+
+	ALTER TABLE [dbo].[ProjectContact] CHECK CONSTRAINT [FK_ProjectContact_Project]
+
+	ALTER TABLE [dbo].[ProjectContact]  WITH CHECK ADD CONSTRAINT [FK_ProjectContact_Contact] FOREIGN KEY([ContactId])
+		REFERENCES [dbo].[Contact] ([Id])
+
+	ALTER TABLE [dbo].[ProjectContact] CHECK CONSTRAINT [FK_ProjectContact_Contact]
+END
+GO
  

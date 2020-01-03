@@ -75,6 +75,7 @@ namespace SQLRepositoryAsync.Data.POCO
             return city;
         }
     }
+
     public class CityMapToObjectView : MapToObjectBase<City>, IMapToObject<City>
     {
         public CityMapToObjectView(ILogger l) : base(l)

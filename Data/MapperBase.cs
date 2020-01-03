@@ -11,11 +11,29 @@ namespace SQLRepositoryAsync.Data
 {
     public class PrimaryKey : IPrimaryKey
     {
+        private string tempString = String.Empty;
         public object Key { get; set; }
+        public object[] CompositeKey { get; set; }
         public bool IsIdentity { get; set; }
+        public bool IsComposite { get; set; }
+        
+        //ctor
+        public PrimaryKey()
+        {
+            IsIdentity = false;
+            IsComposite = false;
+        }
+
         public override string ToString()
         {
-            return $"{Key}|{IsIdentity}";
+            if (IsComposite)
+            {
+                foreach (object k in CompositeKey)
+                    tempString += k.ToString() + "|";
+                return $"|{tempString}{IsComposite}";
+            }
+            else
+                return $"|{Key}|{IsIdentity}";
         }
     }
 
