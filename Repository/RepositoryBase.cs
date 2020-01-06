@@ -135,6 +135,7 @@ namespace SQLRepositoryAsync.Data.Repository
 
         public virtual async Task<TEntity> FindByPK(IPrimaryKey pk)
         {
+            int idx = 1;
             TEntity entity = null;
 
             try
@@ -144,7 +145,14 @@ namespace SQLRepositoryAsync.Data.Repository
 
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
-                    cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
+                    if (pk.IsComposite) { 
+                        foreach (int k in ((PrimaryKey)pk).CompositeKey) {
+                            cmd.Parameters.Add(new SqlParameter("@pk" + idx.ToString(), k));
+                            idx++;
+                        }
+                    }
+                    else
+                        cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         if (reader.Read())
@@ -166,6 +174,7 @@ namespace SQLRepositoryAsync.Data.Repository
 
         protected async Task<object> Add(TEntity entity, PrimaryKey pk)
         {
+
             object result = null;
             int rows = 0;
 
@@ -181,12 +190,20 @@ namespace SQLRepositoryAsync.Data.Repository
                         cmd.CommandType = CommandType.StoredProcedure;
                     MapFromObject.Execute(entity, cmd);
 
+                    //If Composite, then returns an array of objects
+                    if (pk.IsComposite)
+                    {
+                        //returns CompositeKey
+                        rows = await cmd.ExecuteNonQueryAsync();
+                        result = rows;
+                    }
                     //If Identity, then it's numeric
-                    if (pk.IsIdentity)
+                    else if (pk.IsIdentity)
                     {
                         //returns PK
                         result = await cmd.ExecuteScalarAsync();
                     }
+                    //Else it's a natural key
                     else
                     {
                         //returns rows updated and sets result to key
@@ -233,6 +250,7 @@ namespace SQLRepositoryAsync.Data.Repository
  
         protected async Task<int> Delete(IPrimaryKey pk)
         {
+            int idx = 1;
             int rows = 0;
 
             try
@@ -243,7 +261,17 @@ namespace SQLRepositoryAsync.Data.Repository
                 if (unitOfWork != null) await unitOfWork.Enlist();
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
-                    cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
+                    if (pk.IsComposite)
+                    {
+                        foreach (int k in ((PrimaryKey)pk).CompositeKey)
+                        {
+                            cmd.Parameters.Add(new SqlParameter("@pk" + idx.ToString(), k));
+                            idx++;
+                        }
+                    }
+                    else
+                        cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
+
                     rows = await cmd.ExecuteNonQueryAsync();
                 }
             }
@@ -254,7 +282,6 @@ namespace SQLRepositoryAsync.Data.Repository
             logger.LogInformation($"Delete complete for {typeof(TEntity)} entity.");
             return rows;
         }
-
 
         #region ExecNonQuery
         protected async Task<int> ExecNonQuery(IList<SqlParameter> p)

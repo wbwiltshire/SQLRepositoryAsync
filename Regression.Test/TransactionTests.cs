@@ -107,6 +107,7 @@ namespace Regression.Test
                 ContactRepository contactRepos = new ContactRepository(settings, logger, db);
                 CityRepository cityRepos = new CityRepository(settings, logger, db);
                 StateRepository stateRepos = new StateRepository(settings, logger, db);
+                ProjectContactRepository projectContactRepos = new ProjectContactRepository(settings, logger, db);
 
                 #region Add Contact Test
                 Contact contact = new Contact()
@@ -158,6 +159,19 @@ namespace Regression.Test
                 Assert.True(skey == newState.Id);
                 Assert.NotNull(await stateRepos.FindByPK(new PrimaryKey() { Key = newState.Id }));
                 #endregion
+
+                #region Add ProjectContact Test
+                ProjectContact projectContact = new ProjectContact()
+                {
+                    ProjectId = 2,
+                    ContactId = 23
+                };
+                ICollection<ProjectContact> projectContacts = await projectContactRepos.FindAll();
+                Assert.Null(projectContacts.Where(c => c.ProjectId == projectContact.ProjectId && c.ContactId == projectContact.ContactId).FirstOrDefault());
+                key = (int)await projectContactRepos.Add(projectContact);           // returns number of rows added
+                Assert.True(key > 0);
+                Assert.NotNull(await projectContactRepos.FindByPK(new PrimaryKey() { CompositeKey = new object[] { projectContact.ProjectId, projectContact.ContactId }, IsComposite = true }));
+                #endregion
             }
         }
 
@@ -172,6 +186,7 @@ namespace Regression.Test
                 ContactRepository contactRepos = new ContactRepository(settings, logger, db);
                 CityRepository cityRepos = new CityRepository(settings, logger, db);
                 StateRepository stateRepos = new StateRepository(settings, logger, db);
+                ProjectContactRepository projectContactRepos = new ProjectContactRepository(settings, logger, db);
 
                 #region Delete Contact Test
                 Contact contact = await contactRepos.FindByPK(new PrimaryKey() { Key = 8 });
@@ -198,6 +213,15 @@ namespace Regression.Test
                 Assert.Equal(1, rows);
                 state = await stateRepos.FindByPK(new PrimaryKey() { Key = "WA" });
                 Assert.Null(state);
+                #endregion
+
+                #region Delete ProjectContact Test
+                ProjectContact projectContact = await projectContactRepos.FindByPK(new PrimaryKey() { CompositeKey = new object[] {1, 1}, IsComposite = true });
+                Assert.NotNull(projectContact);
+                rows = await projectContactRepos.Delete(new PrimaryKey() { CompositeKey = new object[] { 1, 1 }, IsComposite = true });
+                Assert.Equal(1, rows);
+                projectContact = await projectContactRepos.FindByPK(new PrimaryKey() { CompositeKey = new object[] { 1, 1 }, IsComposite = true });
+                Assert.Null(projectContact);
                 #endregion
 
             }
