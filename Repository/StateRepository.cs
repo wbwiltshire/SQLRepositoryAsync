@@ -86,7 +86,7 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             string storedProcedure = String.Empty;
             object result;
-            string key;
+            int rows;
 
             storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == ADD_PROC);
             if (storedProcedure == null)
@@ -102,10 +102,10 @@ namespace SQLRepositoryAsync.Data.Repository
             MapFromObject = new StateMapFromObject(logger);
             result = await base.Add(entity, entity.PK);
             if (result != null)
-                key = (string)result;
+                rows = (int)result;
             else
-                key = string.Empty;
-            return key;
+                rows = -1;
+            return rows;
         }
         #endregion  
 

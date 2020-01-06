@@ -98,7 +98,6 @@ namespace Regression.Test
         [Fact]
         public async Task AddTest()
         {
-            string skey = string.Empty;
             int key = 0;
 
             using (DBConnection db = new DBConnection(settings.Database.ConnectionString, logger))
@@ -155,8 +154,8 @@ namespace Regression.Test
 
                 State state = await stateRepos.FindByPK(new PrimaryKey() { Key = newState.Id });
                 Assert.Null(state);
-                skey = (string)await stateRepos.Add(newState);
-                Assert.True(skey == newState.Id);
+                key = (int)await stateRepos.Add(newState);
+                Assert.True(key > 0);
                 Assert.NotNull(await stateRepos.FindByPK(new PrimaryKey() { Key = newState.Id }));
                 #endregion
 
