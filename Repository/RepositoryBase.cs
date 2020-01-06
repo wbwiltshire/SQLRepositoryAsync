@@ -12,8 +12,7 @@ using SQLRepositoryAsync.Data.POCO;
 
 namespace SQLRepositoryAsync.Data.Repository
 {
- 
-    public abstract class RepositoryBase<TEntity>
+     public abstract class RepositoryBase<TEntity>
         where TEntity : class
     {
         private UnitOfWork unitOfWork;
@@ -42,10 +41,10 @@ namespace SQLRepositoryAsync.Data.Repository
         protected string CMDText { get; set; }
         protected AppSettingsConfiguration Settings { get; private set; }
         protected Constants.DBCommandType SqlCommandType { get; set; }
-        //protected MapperBase<TEntity> Mapper { get; set; }
         protected MapToObjectBase<TEntity> MapToObject { get; set; }
         protected MapFromObjectBase<TEntity> MapFromObject { get; set; }
 
+        #region FindAllCount
         protected async Task<int> FindAllCount()
         {
             object cnt;
@@ -72,7 +71,9 @@ namespace SQLRepositoryAsync.Data.Repository
                 return 0;
             }
         }
+        #endregion
 
+        #region FindAll
         public virtual async Task<ICollection<TEntity>> FindAll()
         {
             try
@@ -100,7 +101,47 @@ namespace SQLRepositoryAsync.Data.Repository
                 return null;
             }
         }
+        #endregion
 
+        #region FindAll(parms)
+        public virtual async Task<ICollection<TEntity>> FindAll(IList<SqlParameter> parms)
+        {
+            ICollection<TEntity> entities;
+
+            try
+            {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                {
+                    if (SqlCommandType == Constants.DBCommandType.SPROC)
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                    foreach (SqlParameter parm in parms)
+                        cmd.Parameters.Add(parm);
+
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        entities = new List<TEntity>();
+                        while (await reader.ReadAsync())
+                        {
+                            entities.Add(MapToObject.Execute(reader));
+                        }
+                        logger.LogInformation($"FindAll(SqlParameter) complete for {typeof(TEntity)} entity.");
+                        return entities;
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                logger.LogError(ex.Message);
+                return null;
+            }
+        }
+        #endregion
+
+        #region FindAllPaged
         public virtual async Task<ICollection<TEntity>> FindAllPaged(int offset, int pageSize)
         {
             try
@@ -132,9 +173,12 @@ namespace SQLRepositoryAsync.Data.Repository
                 return null;
             }
         }
+        #endregion
 
+        #region FindByPK
         public virtual async Task<TEntity> FindByPK(IPrimaryKey pk)
         {
+            int idx = 1;
             TEntity entity = null;
 
             try
@@ -144,7 +188,14 @@ namespace SQLRepositoryAsync.Data.Repository
 
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
-                    cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
+                    if (pk.IsComposite) { 
+                        foreach (int k in ((PrimaryKey)pk).CompositeKey) {
+                            cmd.Parameters.Add(new SqlParameter("@pk" + idx.ToString(), k));
+                            idx++;
+                        }
+                    }
+                    else
+                        cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         if (reader.Read())
@@ -163,9 +214,12 @@ namespace SQLRepositoryAsync.Data.Repository
 
             return entity;
         }
+        #endregion
 
+        #region Add
         protected async Task<object> Add(TEntity entity, PrimaryKey pk)
         {
+
             object result = null;
             int rows = 0;
 
@@ -181,18 +235,26 @@ namespace SQLRepositoryAsync.Data.Repository
                         cmd.CommandType = CommandType.StoredProcedure;
                     MapFromObject.Execute(entity, cmd);
 
+                    //If Composite, then returns an array of objects
+                    if (pk.IsComposite)
+                    {
+                        //returns CompositeKey
+                        rows = await cmd.ExecuteNonQueryAsync();
+                        result = rows;
+                    }
                     //If Identity, then it's numeric
-                    if (pk.IsIdentity)
+                    else if (pk.IsIdentity)
                     {
                         //returns PK
                         result = await cmd.ExecuteScalarAsync();
                     }
+                    //Else it's a natural key
                     else
                     {
                         //returns rows updated and sets result to key
                         cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
                         rows = await cmd.ExecuteNonQueryAsync();
-                        result = pk.Key;
+                        result = rows;
                     }
                 }
             }
@@ -203,7 +265,9 @@ namespace SQLRepositoryAsync.Data.Repository
             logger.LogInformation($"Add complete for {typeof(TEntity)} entity.");
             return result;
         }
- 
+        #endregion
+
+        #region Update
         protected async Task<int> Update(TEntity entity, IPrimaryKey pk)
         {
             int rows = 0;
@@ -230,9 +294,12 @@ namespace SQLRepositoryAsync.Data.Repository
             logger.LogInformation($"Update complete for {typeof(TEntity)} entity.");
             return rows;
         }
- 
+        #endregion
+
+        #region Delete
         protected async Task<int> Delete(IPrimaryKey pk)
         {
+            int idx = 1;
             int rows = 0;
 
             try
@@ -243,7 +310,17 @@ namespace SQLRepositoryAsync.Data.Repository
                 if (unitOfWork != null) await unitOfWork.Enlist();
                 using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
                 {
-                    cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
+                    if (pk.IsComposite)
+                    {
+                        foreach (int k in ((PrimaryKey)pk).CompositeKey)
+                        {
+                            cmd.Parameters.Add(new SqlParameter("@pk" + idx.ToString(), k));
+                            idx++;
+                        }
+                    }
+                    else
+                        cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
+
                     rows = await cmd.ExecuteNonQueryAsync();
                 }
             }
@@ -254,7 +331,7 @@ namespace SQLRepositoryAsync.Data.Repository
             logger.LogInformation($"Delete complete for {typeof(TEntity)} entity.");
             return rows;
         }
-
+        #endregion
 
         #region ExecNonQuery
         protected async Task<int> ExecNonQuery(IList<SqlParameter> p)
@@ -319,5 +396,40 @@ namespace SQLRepositoryAsync.Data.Repository
         }
         #endregion
 
+        #region ExecJSONQuery
+        protected async Task<string> ExecJSONQuery(IList<SqlParameter> parms)
+        {
+            string result = String.Empty;
+
+            try
+            {
+                if (dbc.Connection.State != ConnectionState.Open)
+                    await dbc.Open();
+
+                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                {
+                    if (SqlCommandType == Constants.DBCommandType.SPROC)
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                    foreach (SqlParameter parm in parms)
+                        cmd.Parameters.Add(parm);
+
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        //Returns a string
+                        while (await reader.ReadAsync())
+                            result += reader.GetString(0);
+                    }
+                    logger.LogInformation("ExecJSONQuery complete.");
+                    return result;
+                }
+            }
+            catch (SqlException ex)
+            {
+                logger.LogError(ex.Message);
+                return "{}";
+            }
+        }
+        #endregion
     }
 }

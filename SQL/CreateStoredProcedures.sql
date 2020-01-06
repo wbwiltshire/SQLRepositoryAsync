@@ -255,3 +255,33 @@ BEGIN
 		WHERE Id = @pk AND Active=1
 END
 GO
+
+--Stored Procedure for testing ExecJSONQuery
+--
+
+IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspGetStats')
+	DROP PROCEDURE [dbo].[uspGetStats]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE uspGetStats
+AS
+BEGIN
+	DECLARE @totalContacts int;
+	DECLARE @totalProjects int;
+	DECLARE @totalCities int;
+	DECLARE @totalStates int;
+
+	SET @totalContacts = (SELECT COUNT(1) FROM Contact WHERE Active=1);
+	SET @totalProjects = (SELECT COUNT(1) FROM Project WHERE Active=1);
+	SET @totalCities = (SELECT COUNT(1) FROM City WHERE Active=1);
+	SET @totalStates = (SELECT COUNT(1) FROM State WHERE Active=1);
+	
+	SELECT @totalContacts AS TotalContacts, @totalProjects AS TotalProjects, @totalCities AS TotalCities, @totalStates AS TotalStates
+		FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+END
+GO

@@ -9,6 +9,7 @@ using SQLRepositoryAsync.Data;
 using SQLRepositoryAsync.Data.POCO;
 using SQLRepositoryAsync.Data.Repository;
 using Xunit;
+using Newtonsoft.Json;
 
 namespace Regression.Test
 {
@@ -143,6 +144,18 @@ namespace Regression.Test
         }
 
         [Fact]
+        public async Task FindByCompositeKeyTest()
+        {
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            ProjectContactRepository repos = new ProjectContactRepository(settings, logger, dbc);
+            int projectId = 1;
+            int contactId = 2;
+
+            ProjectContact pc = await repos.FindByPK(new PrimaryKey() { CompositeKey = new object[] { projectId, contactId }, IsComposite = true });
+            Assert.NotNull(pc);
+        }
+
+        [Fact]
         public async Task FindViewByPKTest()
         {
             Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
@@ -178,5 +191,22 @@ namespace Regression.Test
 
             dbc.Close();
         }
+
+        [Fact]
+        public async Task ExecJSONQueryTest()
+        {
+            Stats stats = null;
+            StatsView statsView = null;
+
+            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            StatsRepository statsRepos = new StatsRepository(settings, logger, dbc);
+
+            stats = await statsRepos.GetStats();
+            statsView = JsonConvert.DeserializeObject<StatsView>(stats.Result);
+            Assert.NotNull(statsView);
+            Assert.True(statsView.TotalContacts > 0);
+            dbc.Close();
+        }
+
     }
 }

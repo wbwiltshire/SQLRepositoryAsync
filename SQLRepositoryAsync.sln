@@ -23,6 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL", "SQL", "{74A37186-F1F
 		SQL\CreateCity.sql = SQL\CreateCity.sql
 		SQL\CreateContact.sql = SQL\CreateContact.sql
 		SQL\CreateForeignKeyConstraints.sql = SQL\CreateForeignKeyConstraints.sql
+		SQL\CreateProject.sql = SQL\CreateProject.sql
+		SQL\CreateProjectContact.sql = SQL\CreateProjectContact.sql
 		SQL\CreateState.sql = SQL\CreateState.sql
 		SQL\CreateStoredProcedures.sql = SQL\CreateStoredProcedures.sql
 		SQL\CreateTables.cmd = SQL\CreateTables.cmd
@@ -45,6 +47,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backup", "backup", "{A7A2E3
 	ProjectSection(SolutionItems) = preProject
 		SQL\backup\City.txt = SQL\backup\City.txt
 		SQL\backup\Contact.txt = SQL\backup\Contact.txt
+		SQL\backup\Project.txt = SQL\backup\Project.txt
+		SQL\backup\ProjectContact.txt = SQL\backup\ProjectContact.txt
 		SQL\backup\State.txt = SQL\backup\State.txt
 	EndProjectSection
 EndProject

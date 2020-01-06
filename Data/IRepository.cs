@@ -14,6 +14,7 @@ namespace SQLRepositoryAsync.Data.Interfaces
     {
         object Key { get; set; }
         bool IsIdentity { get; set; }
+        bool IsComposite { get; set; }
     }
 
     public interface IDBConnection : IDisposable
