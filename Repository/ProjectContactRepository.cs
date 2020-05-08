@@ -55,6 +55,7 @@ namespace SQLRepositoryAsync.Data.Repository
 		#region FindAll
 		public override async Task<ICollection<ProjectContact>> FindAll()
 		{
+			SqlCommandType = Constants.DBCommandType.SQL;
 			CMDText = FINDALL_STMT;
 			CMDText += ORDERBY_STMT + OrderBy;
 			MapToObject = new ProjectContactMapToObject(logger);
@@ -91,6 +92,7 @@ namespace SQLRepositoryAsync.Data.Repository
 		#region FindAllView
 		public async Task<ICollection<ProjectContact>> FindAllView()
 		{
+			SqlCommandType = Constants.DBCommandType.SQL;
 			CMDText = String.Format(FINDALLVIEW_STMT);
 			CMDText += ORDERBY_STMT + OrderBy;
 			MapToObject = new ProjectContactMapToObjectView(logger);
@@ -127,6 +129,7 @@ namespace SQLRepositoryAsync.Data.Repository
 		#region FindByPK(IPrimaryKey pk)
 		public override async Task<ProjectContact> FindByPK(IPrimaryKey pk)
 		{
+			SqlCommandType = Constants.DBCommandType.SQL;
 			CMDText = FINDBYPK_STMT;
 			MapToObject = new ProjectContactMapToObject(logger);
 			return await base.FindByPK(pk);
@@ -136,6 +139,7 @@ namespace SQLRepositoryAsync.Data.Repository
 		#region FindViewByPK(IPrimaryKey pk)
 		public async Task<ProjectContact> FindByPKView(IPrimaryKey pk)
 		{
+			SqlCommandType = Constants.DBCommandType.SQL;
 			CMDText = FINDBYPKVIEW_STMT;
 			MapToObject = new ProjectContactMapToObjectView(logger);
 			return await base.FindByPK(pk);
@@ -170,19 +174,21 @@ namespace SQLRepositoryAsync.Data.Repository
 		#region Update(ProjectContact)
 		public async Task<int> Update(ProjectContact entity)
 		{
-			await Task.Delay(1);
+			//await Task.Delay(1);
+			await Task.Run(() => logger.LogError("Update(entity) Project Contact not implemented"));
 			throw new NotImplementedException("Update(entity) Project Contact not implemented");
 		}
+
 		#endregion
 
 		#region Delete(PrimaryKey pk)
 		public async Task<int> Delete(PrimaryKey pk)
 		{
+			SqlCommandType = Constants.DBCommandType.SQL;
 			CMDText = DELETE_STMT;
 			return await base.Delete(pk);
 		}
 		#endregion
-
 
 	}
 }

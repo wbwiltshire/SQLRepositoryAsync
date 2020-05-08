@@ -55,6 +55,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindAll
         public override async Task<ICollection<Contact>> FindAll()
         {
+            SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = FINDALL_STMT;
             CMDText += ORDERBY_STMT + OrderBy;
             MapToObject = new ContactMapToObject(logger);
@@ -93,6 +94,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindAllView
         public async Task<ICollection<Contact>> FindAllView()
         {
+            SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = FINDALLVIEW_STMT;
             CMDText += ORDERBY_STMT + OrderBy;
             MapToObject = new ContactMapToObjectView(logger);
@@ -131,6 +133,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindByPK
         public override async Task<Contact> FindByPK(IPrimaryKey pk)
         {
+            SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = FINDBYPK_STMT;
             MapToObject = new ContactMapToObject(logger);
             return await base.FindByPK(pk);
@@ -140,6 +143,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindViewByPK
         public async Task<Contact> FindViewByPK(IPrimaryKey pk)
         {
+            SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = FINDBYPKVIEW_STMT;
             MapToObject = new ContactMapToObjectView(logger);
             return await base.FindByPK(pk);
@@ -197,6 +201,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region Delete
         public async Task<int> Delete(PrimaryKey pk)
         {
+            SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = DELETE_STMT;
             return await base.Delete(pk);
         }

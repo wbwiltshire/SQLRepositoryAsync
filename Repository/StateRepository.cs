@@ -52,6 +52,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindAll
         public override async Task<ICollection<State>> FindAll()
         {
+            SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = FINDALL_STMT;
             CMDText += ORDERBY_STMT + OrderBy;
             MapToObject = new StateMapToObject(logger);
@@ -62,6 +63,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindAll(Pager)
         public async Task<IPager<State>> FindAll(IPager<State> pager)
         {
+            SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = String.Format(FINDALLPAGER_STMT, pager.PageSize * pager.PageNbr, pager.PageSize);
             //CMDText += ORDERBY_STMT + OrderBy;
             MapToObject = new StateMapToObject(logger);
@@ -75,6 +77,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindByPK(IPrimaryKey pk)
         public override async Task<State> FindByPK(IPrimaryKey pk)
         {
+            SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = FINDBYPK_STMT;
             MapToObject = new StateMapToObject(logger);
             return await base.FindByPK(pk);
@@ -133,6 +136,7 @@ namespace SQLRepositoryAsync.Data.Repository
         #region Delete
         public async Task<int> Delete(PrimaryKey pk)
         {
+            SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = DELETE_STMT;
             return await base.Delete(pk);
         }
