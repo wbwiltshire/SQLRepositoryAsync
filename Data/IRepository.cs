@@ -17,7 +17,7 @@ namespace SQLRepositoryAsync.Data.Interfaces
         bool IsComposite { get; set; }
     }
 
-    public interface IDBConnection : IDisposable
+    public interface IDBContext : IDisposable
     {
         Task<bool> Open();
         void Close();

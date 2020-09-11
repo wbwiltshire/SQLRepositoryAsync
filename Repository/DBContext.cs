@@ -9,14 +9,14 @@ using SQLRepositoryAsync.Data.Interfaces;
 
 namespace SQLRepositoryAsync.Data.Repository
 {
-    public class DBConnection : IDBConnection
+    public class DBContext : IDBContext
     {
         private ILogger logger;
         private SqlConnection connection = null;
         private bool isOpen = false;
 
         //ctor
-        public DBConnection(string connectionString, ILogger l)
+        public DBContext(string connectionString, ILogger l)
         {
             logger = l;
             isOpen = false;

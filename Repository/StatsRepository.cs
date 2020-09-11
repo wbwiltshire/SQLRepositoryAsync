@@ -21,7 +21,7 @@ namespace SQLRepositoryAsync.Data.Repository
 
         #region ctor
         //Default constructor calls the base ctor
-        public StatsRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) :
+        public StatsRepository(AppSettingsConfiguration s, ILogger l, DBContext d) :
             base(s, l, d)
         { Init(l); }
 

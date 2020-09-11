@@ -34,10 +34,10 @@ namespace SQLRepositoryAsync.Data.Repository
 
         #region ctor
         //Default constructor calls the base ctor
-        public StateRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) :
+        public StateRepository(AppSettingsConfiguration s, ILogger l, DBContext d) :
             base(s, l, d)
         { Init(l); }
-        public StateRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBConnection d) :
+        public StateRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBContext d) :
             base(s, l, uow, d)
         { Init(l); }
 

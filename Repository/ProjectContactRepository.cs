@@ -38,10 +38,10 @@ namespace SQLRepositoryAsync.Data.Repository
 
 		#region ctor
 		//Default constructor calls the base ctor
-		public ProjectContactRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) :
+		public ProjectContactRepository(AppSettingsConfiguration s, ILogger l, DBContext d) :
 			base(s, l, d)
 		{ Init(l); }
-		public ProjectContactRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBConnection d) :
+		public ProjectContactRepository(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBContext d) :
 			base(s, l, uow, d)
 		{ Init(l); }
 

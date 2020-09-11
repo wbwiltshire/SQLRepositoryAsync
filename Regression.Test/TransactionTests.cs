@@ -30,7 +30,7 @@ namespace Regression.Test
         public async Task UOWConnectionTest()
         {
             //You can also use a 'using' statement block
-            using (DBConnection db = new DBConnection(settings.Database.ConnectionString, logger))
+            using (DBContext db = new DBContext(settings.Database.ConnectionString, logger))
             {
                 Assert.NotNull(db);
                 UnitOfWork uow = new UnitOfWork(db, logger);
@@ -46,7 +46,7 @@ namespace Regression.Test
             string updateString = String.Empty;
             int rows = 0;
 
-            using (DBConnection db = new DBConnection(settings.Database.ConnectionString, logger))
+            using (DBContext db = new DBContext(settings.Database.ConnectionString, logger))
             {
                 Assert.NotNull(db);
                 ContactRepository contactRepos = new ContactRepository(settings, logger, db);
@@ -100,7 +100,7 @@ namespace Regression.Test
         {
             int key = 0;
 
-            using (DBConnection db = new DBConnection(settings.Database.ConnectionString, logger))
+            using (DBContext db = new DBContext(settings.Database.ConnectionString, logger))
             {
                 Assert.NotNull(db);
                 ContactRepository contactRepos = new ContactRepository(settings, logger, db);
@@ -179,7 +179,7 @@ namespace Regression.Test
         {
             int rows = 0;
 
-            using (DBConnection db = new DBConnection(settings.Database.ConnectionString, logger))
+            using (DBContext db = new DBContext(settings.Database.ConnectionString, logger))
             {
                 Assert.NotNull(db);
                 ContactRepository contactRepos = new ContactRepository(settings, logger, db);
@@ -245,7 +245,7 @@ namespace Regression.Test
                 CityId = 1
             };
 
-            using (DBConnection db = new DBConnection(settings.Database.ConnectionString, logger))
+            using (DBContext db = new DBContext(settings.Database.ConnectionString, logger))
             {
                 Assert.NotNull(db);
                 UnitOfWork uow = new UnitOfWork(db, logger);
@@ -273,7 +273,7 @@ namespace Regression.Test
             string updateString = "Rollback this update.";
             string oldNotes = String.Empty;
 
-            using (DBConnection db = new DBConnection(settings.Database.ConnectionString, logger))
+            using (DBContext db = new DBContext(settings.Database.ConnectionString, logger))
             {
                 Assert.NotNull(db);
                 UnitOfWork uow = new UnitOfWork(db, logger);

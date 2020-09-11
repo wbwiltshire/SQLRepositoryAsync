@@ -19,7 +19,7 @@ namespace Regression.Test
         private SetupFixture fixture;
         private ILogger logger;
         private AppSettingsConfiguration settings;
-        private DBConnection dbc;
+        private DBContext dbc;
 
         //Fixture instantiated at the beginning of all the tests in this class and passed to constructor
         public QueryTests(SetupFixture f)
@@ -32,7 +32,7 @@ namespace Regression.Test
         [Fact]
         public async Task ConnectionTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             Assert.True(await dbc.Open());
             Assert.True(dbc.Connection.State == ConnectionState.Open);
 
@@ -42,7 +42,7 @@ namespace Regression.Test
         [Fact]
         public async Task FindAllTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
             CityRepository cityRepos = new CityRepository(settings, logger, dbc);
             StateRepository stateRepos = new StateRepository(settings, logger, dbc);
@@ -60,7 +60,7 @@ namespace Regression.Test
         [Fact]
         public async Task FindAllPagedTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
             CityRepository cityRepos = new CityRepository(settings, logger, dbc);
             StateRepository stateRepos = new StateRepository(settings, logger, dbc);
@@ -84,7 +84,7 @@ namespace Regression.Test
         [Fact]
         public async Task FindAllViewTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
             CityRepository cityRepos = new CityRepository(settings, logger, dbc);
 
@@ -102,7 +102,7 @@ namespace Regression.Test
         [Fact]
         public async Task FindAllViewPagedTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
             CityRepository cityRepos = new CityRepository(settings, logger, dbc);
 
@@ -124,7 +124,7 @@ namespace Regression.Test
         [Fact]
         public async Task FindByPKAlphaTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             StateRepository repos = new StateRepository(settings, logger, dbc);
 
             State state = await repos.FindByPK(new PrimaryKey() { Key = "FL" });
@@ -136,7 +136,7 @@ namespace Regression.Test
         [Fact]
         public async Task FindByPKNumericTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             ContactRepository repos = new ContactRepository(settings, logger, dbc);
 
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key =1 });
@@ -146,7 +146,7 @@ namespace Regression.Test
         [Fact]
         public async Task FindByCompositeKeyTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             ProjectContactRepository repos = new ProjectContactRepository(settings, logger, dbc);
             int projectId = 1;
             int contactId = 2;
@@ -158,7 +158,7 @@ namespace Regression.Test
         [Fact]
         public async Task FindViewByPKTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             ContactRepository repos = new ContactRepository(settings, logger, dbc);
 
             Contact contact = await repos.FindViewByPK(new PrimaryKey() { Key = 1 });
@@ -173,7 +173,7 @@ namespace Regression.Test
         [Fact]
         public async Task ExecNonQueryTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             ContactRepository repos = new ContactRepository(settings, logger, dbc);
 
             Assert.True(await repos.NonQuery() > 1);
@@ -184,7 +184,7 @@ namespace Regression.Test
         [Fact]
         public async Task ExecStoredProcTest()
         {
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             ContactRepository contactRepos = new ContactRepository(settings, logger, dbc);
 
             Assert.True(await contactRepos.StoredProc(1) == 1);
@@ -198,7 +198,7 @@ namespace Regression.Test
             Stats stats = null;
             StatsView statsView = null;
 
-            Assert.NotNull(dbc = new DBConnection(settings.Database.ConnectionString, logger));
+            Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
             StatsRepository statsRepos = new StatsRepository(settings, logger, dbc);
 
             stats = await statsRepos.GetStats();

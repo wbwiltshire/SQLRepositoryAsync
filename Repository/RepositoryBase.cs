@@ -17,18 +17,18 @@ namespace SQLRepositoryAsync.Data.Repository
     {
         private UnitOfWork unitOfWork;
         private readonly ILogger logger;
-        private DBConnection dbc;
+        private DBContext dbc;
 
         #region ctor
         //ctor with no unit of work necessary
-        protected RepositoryBase(AppSettingsConfiguration s, ILogger l, DBConnection d)
+        protected RepositoryBase(AppSettingsConfiguration s, ILogger l, DBContext d)
         {
             Settings = s;
             logger = l;
             dbc = d;
         }
         //ctor with unit of work
-        protected RepositoryBase(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBConnection d)
+        protected RepositoryBase(AppSettingsConfiguration s, ILogger l, UnitOfWork uow, DBContext d)
         {
             Settings = s;
             logger = l;

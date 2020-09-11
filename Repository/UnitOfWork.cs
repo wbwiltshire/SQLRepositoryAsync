@@ -13,11 +13,11 @@ namespace SQLRepositoryAsync.Data.Repository
     public class UnitOfWork : IUOW
     {
         private readonly ILogger logger;
-        private DBConnection dbc;
+        private DBContext dbc;
         private string CMDText;
         private int transactionCount;
 
-        public UnitOfWork(DBConnection d, ILogger l)
+        public UnitOfWork(DBContext d, ILogger l)
         {
             logger = l;
             transactionCount = 0;
