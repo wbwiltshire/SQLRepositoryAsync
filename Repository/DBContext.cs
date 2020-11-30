@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using SQLRepositoryAsync.Data.Interfaces;
 
