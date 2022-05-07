@@ -17,10 +17,10 @@ namespace SQLRepositoryAsync.Data.Repository
         private const string FINDALLCOUNT_STMT = "SELECT COUNT(Id) FROM Contact WHERE Active=1";
         private const string FINDALL_STMT = "SELECT Id,FirstName,LastName,Address1,Address2,Notes,ZipCode,HomePhone,WorkPhone,CellPhone,EMail,CityId,Active,ModifiedDt,CreateDt FROM Contact WHERE Active=1";
         private const string FINDALLVIEW_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, CityName, StateId, StateName, Active, ModifiedDt, CreateDt FROM vwFindAllContactView";
-        private const string FINDALLPAGER_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt FROM Contact WHERE Active=1 ORDER BY Id OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY;";
-        private const string FINDALLVIEWPAGER_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId,  CityName, StateId, StateName, Active, ModifiedDt, CreateDt FROM vwFindAllContactView ORDER BY Id OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY;";
+        private const string FINDALLPAGER_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt FROM Contact WHERE Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;";
+        private const string FINDALLVIEWPAGER_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId,  CityName, StateId, StateName, Active, ModifiedDt, CreateDt FROM vwFindAllContactView @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;";
         private const string FINDBYPK_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt FROM Contact WHERE Id =@pk AND Active=1";
-        private const string FINDBYPKVIEW_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, CityName, StateId, StateName, Active, ModifiedDt, CreateDt FROM vwFindAllContactView WHERE Id =@pk AND Active = 1 ORDER BY Id ";
+        private const string FINDBYPKVIEW_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, CityName, StateId, StateName, Active, ModifiedDt, CreateDt FROM vwFindAllContactView WHERE Id =@pk AND Active = 1";
         private const string ADD_STMT = "INSERT INTO Contact (FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt) VALUES (@p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, 1, GETDATE(), GETDATE()); SELECT CAST(SCOPE_IDENTITY() AS INT);";
         private const string UPDATE_STMT = "UPDATE Contact SET FirstName=@p1, LastName=@p2, Address1=@p3, Address2=@p4, Notes=@p5, ZipCode=@p6, HomePhone=@p7, WorkPhone=@p8, CellPhone=@p9, EMail=@p10, CityId=@p11, Active=1, ModifiedDt=GETDATE() WHERE Id =@pk AND Active=1";
         private const string DELETE_STMT = "UPDATE Contact SET Active=0, ModifiedDt=GETDATE() WHERE Id =@pk";
@@ -47,8 +47,10 @@ namespace SQLRepositoryAsync.Data.Repository
         private void Init(ILogger l)
         {
             logger = l;
-            //Mapper = new ContactMapper();
-            OrderBy = "Id";
+            
+            // Set default ordering
+            OrderByColumns = new Dictionary<int, string>() { { 1, "Id" } };
+            SetOrderBy(1, SQLOrderBy.ASC);
         }
         #endregion
 
@@ -56,8 +58,7 @@ namespace SQLRepositoryAsync.Data.Repository
         public override async Task<ICollection<Contact>> FindAll()
         {
             SqlCommandType = Constants.DBCommandType.SQL;
-            CMDText = FINDALL_STMT;
-            CMDText += ORDERBY_STMT + OrderBy;
+            CMDText = BuildCommandText(FINDALL_STMT);                         // Use default OrderBy
             MapToObject = new ContactMapToObject(logger);
             return await base.FindAll();
         }
@@ -67,22 +68,26 @@ namespace SQLRepositoryAsync.Data.Repository
         public async Task<IPager<Contact>> FindAll(IPager<Contact> pager)
         {
             string storedProcedure = String.Empty;
-
-            //CMDText += ORDERBY_STMT + OrderBy;
+            IList<SqlParameter> parms = new List<SqlParameter>();
             MapToObject = new ContactMapToObject(logger);
+            parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
+            parms.Add(new SqlParameter("@pageSize", pager.PageSize));
 
             storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDPROC);
             if (storedProcedure == null)
             {
+                SetOrderBy(pager.SortColumn, pager.Direction);
                 SqlCommandType = Constants.DBCommandType.SQL;
-                CMDText = String.Format(FINDALLPAGER_STMT, pager.PageSize * pager.PageNbr, pager.PageSize);
-                pager.Entities = await base.FindAll();
+                CMDText = BuildCommandText(FINDALLPAGER_STMT);
+                pager.Entities = await base.FindAll(parms);
             }
             else
             {
                 SqlCommandType = Constants.DBCommandType.SPROC;
+                parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
+                parms.Add(new SqlParameter("@direction", (int)pager.Direction));
                 CMDText = storedProcedure;
-                pager.Entities = await base.FindAllPaged(pager.PageSize * pager.PageNbr, pager.PageSize);
+                pager.Entities = await base.FindAll(parms);
             }
 
             CMDText = FINDALLCOUNT_STMT;
@@ -94,10 +99,10 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindAllView
         public async Task<ICollection<Contact>> FindAllView()
         {
-            SqlCommandType = Constants.DBCommandType.SQL;
-            CMDText = FINDALLVIEW_STMT;
-            CMDText += ORDERBY_STMT + OrderBy;
             MapToObject = new ContactMapToObjectView(logger);
+
+            SqlCommandType = Constants.DBCommandType.SQL;
+            CMDText = BuildCommandText(FINDALLVIEW_STMT);
             return await base.FindAll();        
         }
         #endregion
@@ -106,22 +111,26 @@ namespace SQLRepositoryAsync.Data.Repository
         public async Task<IPager<Contact>> FindAllView(IPager<Contact> pager)
         {
             string storedProcedure = String.Empty;
-
-            //CMDText += ORDERBY_STMT + OrderBy;
+            IList<SqlParameter> parms = new List<SqlParameter>();
             MapToObject = new ContactMapToObjectView(logger);
+            parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
+            parms.Add(new SqlParameter("@pageSize", pager.PageSize));
 
             storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDVIEWPROC);
             if (storedProcedure == null)
             {
                 SqlCommandType = Constants.DBCommandType.SQL;
-                CMDText = String.Format(FINDALLVIEWPAGER_STMT, pager.PageSize * pager.PageNbr, pager.PageSize);
-                pager.Entities = await base.FindAll();
+                SetOrderBy(pager.SortColumn, pager.Direction);
+                CMDText = BuildCommandText(FINDALLVIEWPAGER_STMT);
+                pager.Entities = await base.FindAll(parms);
             }
             else
             {
                 SqlCommandType = Constants.DBCommandType.SPROC;
+                parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
+                parms.Add(new SqlParameter("@direction", (int)pager.Direction));
                 CMDText = storedProcedure;
-                pager.Entities = await base.FindAllPaged(pager.PageSize * pager.PageNbr, pager.PageSize);
+                pager.Entities = await base.FindAll(parms);
             }
 
             CMDText = FINDALLCOUNT_STMT;

@@ -37,12 +37,34 @@ namespace SQLRepositoryAsync.Data.Repository
         }
         #endregion
 
-        public string OrderBy { get; set; }
+        protected string OrderBy { get; set; }
         protected string CMDText { get; set; }
         protected AppSettingsConfiguration Settings { get; private set; }
         protected Constants.DBCommandType SqlCommandType { get; set; }
         protected MapToObjectBase<TEntity> MapToObject { get; set; }
         protected MapFromObjectBase<TEntity> MapFromObject { get; set; }
+        protected Dictionary<int, string> OrderByColumns { get; set; }
+        protected void SetOrderBy(int column, SQLOrderBy direction)
+        {
+            string col = String.Empty;
+            if (OrderByColumns is null)
+                col = "Id";
+            else {
+                if (OrderByColumns.ContainsKey(column))
+                    col = OrderByColumns[column];
+                else
+                    col = "Id";
+            }
+                
+            OrderBy = $"ORDER BY {col} " + (direction == SQLOrderBy.ASC ? "ASC" : "DESC");
+        }
+        protected string BuildCommandText(string ct)
+        {
+            if (ct.Contains("@orderBy"))
+                return ct.Replace("@orderBy", OrderBy);
+            else
+                return ct;
+        }
 
         #region FindAllCount
         protected async Task<int> FindAllCount()
@@ -129,40 +151,6 @@ namespace SQLRepositoryAsync.Data.Repository
                             entities.Add(MapToObject.Execute(reader));
                         }
                         logger.LogInformation($"FindAll(SqlParameter) complete for {typeof(TEntity)} entity.");
-                        return entities;
-                    }
-                }
-            }
-            catch (SqlException ex)
-            {
-                logger.LogError(ex.Message);
-                return null;
-            }
-        }
-        #endregion
-
-        #region FindAllPaged
-        public virtual async Task<ICollection<TEntity>> FindAllPaged(int offset, int pageSize)
-        {
-            try
-            {
-                if (dbc.Connection.State != ConnectionState.Open)
-                    await dbc.Open();
-
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.Add(new SqlParameter("@p1", offset));
-                    cmd.Parameters.Add(new SqlParameter("@p2", pageSize));
-
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
-                    {
-                        ICollection<TEntity> entities = new List<TEntity>();
-                        while (await reader.ReadAsync())
-                        {
-                            entities.Add(MapToObject.Execute(reader));
-                        }
-                        logger.LogInformation($"FindAllPaged complete for {typeof(TEntity)} entity.");
                         return entities;
                     }
                 }

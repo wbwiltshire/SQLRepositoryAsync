@@ -8,6 +8,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using SQLRepositoryAsync.Data;
 using SQLRepositoryAsync.Data.Interfaces;
@@ -68,21 +69,25 @@ namespace SQLRepositoryAsync.Data.Repository
 		public async Task<IPager<Project>> FindAll(IPager<Project> pager)
 		{
 			string storedProcedure = String.Empty;
-
+			IList<SqlParameter> parms = new List<SqlParameter>();
 			MapToObject = new ProjectMapToObject(logger);
+			parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
+			parms.Add(new SqlParameter("@pageSize", pager.PageSize));
 
 			storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDPROC);
 			if (storedProcedure == null)
 			{
 				SqlCommandType = Constants.DBCommandType.SQL;
-				CMDText = String.Format(FINDALLPAGER_STMT, pager.PageSize * pager.PageNbr, pager.PageSize);
+				CMDText = BuildCommandText(FINDALLPAGER_STMT);
 				pager.Entities = await base.FindAll();
 			}
 			else
 			{
 				SqlCommandType = Constants.DBCommandType.SPROC;
+				parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
+				parms.Add(new SqlParameter("@direction", (int)pager.Direction));
 				CMDText = storedProcedure;
-				pager.Entities = await base.FindAllPaged(pager.PageSize * pager.PageNbr, pager.PageSize);
+				pager.Entities = await base.FindAll(parms);
 			}
 			CMDText = FINDALLCOUNT_STMT;
 			pager.RowCount = await base.FindAllCount();
@@ -94,8 +99,7 @@ namespace SQLRepositoryAsync.Data.Repository
 		public async Task<ICollection<Project>> FindAllView()
 		{
 			SqlCommandType = Constants.DBCommandType.SQL;
-			CMDText = String.Format(FINDALLVIEW_STMT);
-			CMDText += ORDERBY_STMT + OrderBy;
+			CMDText = BuildCommandText(FINDALLVIEW_STMT);
 			MapToObject = new ProjectMapToObjectView(logger);
 			return await base.FindAll();
 		}
@@ -105,8 +109,10 @@ namespace SQLRepositoryAsync.Data.Repository
 		public async Task<IPager<Project>> FindAllView(IPager<Project> pager)
 		{
 			string storedProcedure = String.Empty;
-
+			IList<SqlParameter> parms = new List<SqlParameter>();
 			MapToObject = new ProjectMapToObjectView(logger);
+			parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
+			parms.Add(new SqlParameter("@pageSize", pager.PageSize));
 
 			storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDVIEWPROC);
 			if (storedProcedure == null)
@@ -118,8 +124,10 @@ namespace SQLRepositoryAsync.Data.Repository
 			else
 			{
 				SqlCommandType = Constants.DBCommandType.SPROC;
+				parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
+				parms.Add(new SqlParameter("@direction", (int)pager.Direction));
 				CMDText = storedProcedure;
-				pager.Entities = await base.FindAllPaged(pager.PageSize * pager.PageNbr, pager.PageSize);
+				pager.Entities = await base.FindAll(parms);
 			}
 			CMDText = FINDALLCOUNT_STMT;
 			pager.RowCount = await base.FindAllCount();

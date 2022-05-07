@@ -8,6 +8,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using SQLRepositoryAsync.Data;
 using SQLRepositoryAsync.Data.Interfaces;
@@ -21,7 +22,7 @@ namespace SQLRepositoryAsync.Data.Repository
         private const string FINDALLCOUNT_STMT = "SELECT COUNT(Id) FROM State WHERE Active=1"; 
         private const string FINDALL_STMT = "SELECT Id,Name,Active,ModifiedDt,CreateDt FROM State WHERE Active=1";
         //private const string FINDALLPAGER_STMT = "SELECT TOP({0}) Id, Name, Active, ModifiedDt, CreateDt FROM (SELECT Id, Name, Active, ModifiedDt, CreateDt, ROW_NUMBER() OVER (ORDER BY {1}) AS [rc] FROM State) AS s WHERE rc > {2}";
-        private const string FINDALLPAGER_STMT = "SELECT Id,Name,Active,ModifiedDt,CreateDt FROM State WHERE Active=1 ORDER BY Id OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY";
+        private const string FINDALLPAGER_STMT = "SELECT Id,Name,Active,ModifiedDt,CreateDt FROM State WHERE Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY";
         private const string FINDBYPK_STMT = "SELECT Id, Name, Active, ModifiedDt, CreateDt FROM State WHERE Id =@pk AND Active=1";
         private const string ADD_STMT = "INSERT INTO State (Id, Name, Active, ModifiedDt, CreateDt) VALUES (@pk, @p1, 1, GETDATE(), GETDATE())";
         private const string UPDATE_STMT = "UPDATE State SET Name=@p1, ModifiedDt=GETDATE() WHERE Id =@pk AND Active=1";
@@ -44,8 +45,9 @@ namespace SQLRepositoryAsync.Data.Repository
         private void Init(ILogger l)
         {
             logger = l;
-            //Mapper = new StateMapper();
-            OrderBy = "Id";
+            // Set default ordering
+            OrderByColumns = new Dictionary<int, string>() { { 1, "Id" } };
+            SetOrderBy(1, SQLOrderBy.ASC);
         }
         #endregion
 
@@ -53,8 +55,7 @@ namespace SQLRepositoryAsync.Data.Repository
         public override async Task<ICollection<State>> FindAll()
         {
             SqlCommandType = Constants.DBCommandType.SQL;
-            CMDText = FINDALL_STMT;
-            CMDText += ORDERBY_STMT + OrderBy;
+            CMDText = BuildCommandText(FINDALL_STMT);
             MapToObject = new StateMapToObject(logger);
             return await base.FindAll();
         }
@@ -63,11 +64,15 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindAll(Pager)
         public async Task<IPager<State>> FindAll(IPager<State> pager)
         {
+            IList<SqlParameter> parms = new List<SqlParameter>();
+            parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
+            parms.Add(new SqlParameter("@pageSize", pager.PageSize));
+
             SqlCommandType = Constants.DBCommandType.SQL;
-            CMDText = String.Format(FINDALLPAGER_STMT, pager.PageSize * pager.PageNbr, pager.PageSize);
-            //CMDText += ORDERBY_STMT + OrderBy;
+            CMDText = BuildCommandText(FINDALLPAGER_STMT);
             MapToObject = new StateMapToObject(logger);
-            pager.Entities = await base.FindAll();
+            pager.Entities = await base.FindAll(parms);
+
             CMDText = FINDALLCOUNT_STMT;
             pager.RowCount = await base.FindAllCount();
             return pager;

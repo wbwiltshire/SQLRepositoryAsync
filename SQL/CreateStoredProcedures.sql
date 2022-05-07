@@ -1,7 +1,6 @@
 --Contact Stored Procedures
 --
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspAddContact')
-	DROP PROCEDURE [dbo].[uspAddContact]
+DROP PROCEDURE IF EXISTS [dbo].[uspAddContact]
 GO
 
 SET ANSI_NULLS ON
@@ -30,8 +29,7 @@ BEGIN
 END
 GO
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspUpdateContact')
-	DROP PROCEDURE [dbo].[uspUpdateContact]
+DROP PROCEDURE IF EXISTS [dbo].[uspUpdateContact]
 GO
 
 SET ANSI_NULLS ON
@@ -60,8 +58,7 @@ BEGIN
 END
 GO
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspFindAllContactPaged')
-	DROP PROCEDURE [dbo].[uspFindAllContactPaged]
+DROP PROCEDURE IF EXISTS [dbo].[uspFindAllContactPaged]
 GO
 
 SET ANSI_NULLS ON
@@ -70,21 +67,34 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROCEDURE uspFindAllContactPaged
-	@p1	INT,		-- Offset
-	@p2	INT		-- PageSize
+	@offset	INT,		-- Offset
+	@pageSize	INT,		-- PageSize
+	@sortColumn INT,	
+	@direction INT
 	
 AS
 BEGIN
 	SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt 
 	FROM Contact 
 	WHERE Active=1 
-	ORDER BY Id 
-	OFFSET @p1 ROWS FETCH NEXT @p2 ROWS ONLY;
+	ORDER BY
+	CASE WHEN @direction = 1 THEN
+		CASE
+			WHEN @sortColumn = 1 THEN Id 
+			ELSE Id					-- Always have a default 
+		END
+	END ASC,
+	CASE WHEN @direction = 2 THEN
+		CASE
+			WHEN @sortColumn = 1 THEN Id 
+			ELSE Id					-- Always have a default 
+		END
+	END DESC
+	OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;
 END
 GO
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspFindAllContactViewPaged')
-	DROP PROCEDURE [dbo].[uspFindAllContactViewPaged]
+DROP PROCEDURE IF EXISTS [dbo].[uspFindAllContactViewPaged]
 GO
 
 SET ANSI_NULLS ON
@@ -93,22 +103,35 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROCEDURE uspFindAllContactViewPaged
-	@p1	INT,		-- Offset
-	@p2	INT		-- PageSize
+	@offset	INT,		-- Offset
+	@pageSize	INT,		-- PageSize
+	@sortColumn INT,	
+	@direction INT
 	
 AS
 BEGIN
 	SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId,  CityName, StateId, StateName, Active, ModifiedDt, CreateDt 
-	FROM vwFindAllContactView 
-	ORDER BY Id 
-	OFFSET @p1 ROWS FETCH NEXT @p2 ROWS ONLY;
+	FROM vwFindAllContactView
+	ORDER BY
+	CASE WHEN @direction = 1 THEN
+		CASE
+			WHEN @sortColumn = 1 THEN Id 
+			ELSE Id					-- Always have a default 
+		END
+	END ASC,
+	CASE WHEN @direction = 2 THEN
+		CASE
+			WHEN @sortColumn = 1 THEN Id 
+			ELSE Id					-- Always have a default 
+		END
+	END DESC
+	OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;
 END
 GO
 
 --City Stored Procedures
 --
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspAddCity')
-	DROP PROCEDURE [dbo].[uspAddCity]
+DROP PROCEDURE IF EXISTS [dbo].[uspAddCity]
 GO
 
 SET ANSI_NULLS ON
@@ -128,8 +151,7 @@ BEGIN
 END
 GO
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspUpdateCity')
-	DROP PROCEDURE [dbo].[uspUpdateCity]
+DROP PROCEDURE IF EXISTS [dbo].[uspUpdateCity]
 GO
 
 SET ANSI_NULLS ON
@@ -149,8 +171,7 @@ BEGIN
 END
 GO
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspFindAllCityPaged')
-	DROP PROCEDURE [dbo].[uspFindAllCityPaged]
+DROP PROCEDURE IF EXISTS [dbo].[uspFindAllCityPaged]
 GO
 
 SET ANSI_NULLS ON
@@ -159,21 +180,34 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROCEDURE uspFindAllCityPaged
-	@p1	INT,		-- Offset
-	@p2	INT		-- PageSize
+	@offset	INT,		-- Offset
+	@pageSize	INT,		-- PageSize
+	@sortColumn INT,	
+	@direction INT
 	
 AS
 BEGIN
 	SELECT Id, Name, StateId, Active, ModifiedDt, CreateDt 
 	FROM City 
 	WHERE Active=1 
-	ORDER BY Id 
-	OFFSET @p1 ROWS FETCH NEXT @p2 ROWS ONLY;
+	ORDER BY
+	CASE WHEN @direction = 1 THEN
+		CASE
+			WHEN @sortColumn = 1 THEN Id 
+			ELSE Id					-- Always have a default 
+		END
+	END ASC,
+	CASE WHEN @direction = 2 THEN
+		CASE
+			WHEN @sortColumn = 1 THEN Id 
+			ELSE Id					-- Always have a default 
+		END
+	END DESC
+	OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;
 END
 GO
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspFindAllCityViewPaged')
-	DROP PROCEDURE [dbo].[uspFindAllCityViewPaged]
+DROP PROCEDURE IF EXISTS [dbo].[uspFindAllCityViewPaged]
 GO
 
 SET ANSI_NULLS ON
@@ -182,22 +216,35 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROCEDURE uspFindAllCityViewPaged
-	@p1	INT,		-- Offset
-	@p2	INT		-- PageSize
+	@offset	INT,		-- Offset
+	@pageSize	INT,		-- PageSize
+	@sortColumn INT,	
+	@direction INT
 	
 AS
 BEGIN
 	SELECT Id, Name, StateId, StateName, Active, ModifiedDt, CreateDt 
 	FROM vwFindAllCityView 
-	ORDER BY Id 
-	OFFSET @p1 ROWS FETCH NEXT @p2 ROWS ONLY;
+	ORDER BY
+	CASE WHEN @direction = 1 THEN
+		CASE
+			WHEN @sortColumn = 1 THEN Id 
+			ELSE Id					-- Always have a default 
+		END
+	END ASC,
+	CASE WHEN @direction = 2 THEN
+		CASE
+			WHEN @sortColumn = 1 THEN Id 
+			ELSE Id					-- Always have a default 
+		END
+	END DESC
+	OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;
 END
 GO
 
 --State Stored Procedures
 --
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspAddState')
-	DROP PROCEDURE [dbo].[uspAddState]
+DROP PROCEDURE IF EXISTS [dbo].[uspAddState]
 GO
 
 SET ANSI_NULLS ON
@@ -215,8 +262,7 @@ BEGIN
 END
 GO
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspUpdateState')
-	DROP PROCEDURE [dbo].[uspUpdateState]
+DROP PROCEDURE IF EXISTS [dbo].[uspUpdateState]
 GO
 
 SET ANSI_NULLS ON
@@ -237,8 +283,7 @@ GO
 --Testing Stored Procedures
 --
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspStoredProc')
-	DROP PROCEDURE [dbo].[uspStoredProc]
+DROP PROCEDURE IF EXISTS [dbo].[uspStoredProc]
 GO
 
 SET ANSI_NULLS ON
@@ -259,8 +304,7 @@ GO
 --Stored Procedure for testing ExecJSONQuery
 --
 
-IF  EXISTS (SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = 'uspGetStats')
-	DROP PROCEDURE [dbo].[uspGetStats]
+DROP PROCEDURE IF EXISTS [dbo].[uspGetStats]
 GO
 
 SET ANSI_NULLS ON

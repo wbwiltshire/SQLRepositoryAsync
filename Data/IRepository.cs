@@ -32,8 +32,8 @@ namespace SQLRepositoryAsync.Data.Interfaces
     public interface IRepository<TEntity>
         where TEntity : class
     {
-        Task<IPager<TEntity>> FindAll(IPager<TEntity> pager);
         Task<ICollection<TEntity>> FindAll();
+        Task<IPager<TEntity>> FindAll(IPager<TEntity> pager);
         Task<TEntity> FindByPK(IPrimaryKey pk);
         Task<object> Add(TEntity entity);
         Task<int> Update(TEntity entity);

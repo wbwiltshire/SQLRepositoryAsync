@@ -8,6 +8,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using SQLRepositoryAsync.Data;
 using SQLRepositoryAsync.Data.Interfaces;
@@ -48,7 +49,13 @@ namespace SQLRepositoryAsync.Data.Repository
 		private void Init(ILogger l)
 		{
 			logger = l;
-			OrderBy = "ProjectId, ContactId";
+			//OrderBy = "ProjectId, ContactId";
+			// TODO: Fix multiple sort column issue
+			//
+
+			// Set default ordering
+			OrderByColumns = new Dictionary<int, string>() { { 1, "Id" } };
+			SetOrderBy(1, SQLOrderBy.ASC);
 		}
 		#endregion
 
@@ -56,8 +63,7 @@ namespace SQLRepositoryAsync.Data.Repository
 		public override async Task<ICollection<ProjectContact>> FindAll()
 		{
 			SqlCommandType = Constants.DBCommandType.SQL;
-			CMDText = FINDALL_STMT;
-			CMDText += ORDERBY_STMT + OrderBy;
+			CMDText = BuildCommandText(FINDALL_STMT);
 			MapToObject = new ProjectContactMapToObject(logger);
 			return await base.FindAll();
 		}
@@ -67,21 +73,25 @@ namespace SQLRepositoryAsync.Data.Repository
 		public async Task<IPager<ProjectContact>> FindAll(IPager<ProjectContact> pager)
 		{
 			string storedProcedure = String.Empty;
-
+			IList<SqlParameter> parms = new List<SqlParameter>();
 			MapToObject = new ProjectContactMapToObject(logger);
+			parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
+			parms.Add(new SqlParameter("@pageSize", pager.PageSize));
 
 			storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDPROC);
 			if (storedProcedure == null)
 			{
 				SqlCommandType = Constants.DBCommandType.SQL;
-				CMDText = String.Format(FINDALLPAGER_STMT, pager.PageSize * pager.PageNbr, pager.PageSize);
+				CMDText = BuildCommandText(FINDALLPAGER_STMT);
 				pager.Entities = await base.FindAll();
 			}
 			else
 			{
 				SqlCommandType = Constants.DBCommandType.SPROC;
+				parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
+				parms.Add(new SqlParameter("@direction", (int)pager.Direction));
 				CMDText = storedProcedure;
-				pager.Entities = await base.FindAllPaged(pager.PageSize * pager.PageNbr, pager.PageSize);
+				pager.Entities = await base.FindAll(parms);
 			}
 			CMDText = FINDALLCOUNT_STMT;
 			pager.RowCount = await base.FindAllCount();
@@ -93,8 +103,7 @@ namespace SQLRepositoryAsync.Data.Repository
 		public async Task<ICollection<ProjectContact>> FindAllView()
 		{
 			SqlCommandType = Constants.DBCommandType.SQL;
-			CMDText = String.Format(FINDALLVIEW_STMT);
-			CMDText += ORDERBY_STMT + OrderBy;
+			CMDText = BuildCommandText(FINDALLVIEW_STMT);
 			MapToObject = new ProjectContactMapToObjectView(logger);
 			return await base.FindAll();
 		}
@@ -104,21 +113,25 @@ namespace SQLRepositoryAsync.Data.Repository
 		public async Task<IPager<ProjectContact>> FindAllView(IPager<ProjectContact> pager)
 		{
 			string storedProcedure = String.Empty;
-
+			IList<SqlParameter> parms = new List<SqlParameter>();
 			MapToObject = new ProjectContactMapToObjectView(logger);
+			parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
+			parms.Add(new SqlParameter("@pageSize", pager.PageSize));
 
 			storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDVIEWPROC);
 			if (storedProcedure == null)
 			{
 				SqlCommandType = Constants.DBCommandType.SQL;
-				CMDText = String.Format(FINDALLVIEWPAGER_STMT, pager.PageSize * pager.PageNbr, pager.PageSize);
+				CMDText = BuildCommandText(FINDALLVIEWPAGER_STMT);
 				pager.Entities = await base.FindAll();
 			}
 			else
 			{
 				SqlCommandType = Constants.DBCommandType.SPROC;
+				parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
+				parms.Add(new SqlParameter("@direction", (int)pager.Direction));
 				CMDText = storedProcedure;
-				pager.Entities = await base.FindAllPaged(pager.PageSize * pager.PageNbr, pager.PageSize);
+				pager.Entities = await base.FindAll(parms);
 			}
 			CMDText = FINDALLCOUNT_STMT;
 			pager.RowCount = await base.FindAllCount();
