@@ -23,15 +23,15 @@ namespace SQLRepositoryAsync.Data.POCO
         public string Name { get; set; }
         //Properties managed by the architecture
         public bool Active { get; set; }
-        public DateTime ModifiedDt { get; set; }
-        public DateTime CreateDt { get; set; }
+        public DateTime ModifiedUtcDt { get; set; }
+        public DateTime CreateUtcDt { get; set; }
         public State()
         {
             PK = new PrimaryKey() { Key = String.Empty, IsIdentity = false };
         }
         public string ToPrint()
         {
-            return String.Format("{0}|{1}|{2}|{3}|{4}", Id, Name, Active, ModifiedDt, CreateDt);
+            return String.Format("{0}|{1}|{2}|{3}|{4}", Id, Name, Active, ModifiedUtcDt, CreateUtcDt);
         }
 
     }
@@ -55,10 +55,10 @@ namespace SQLRepositoryAsync.Data.POCO
                 state.Name = reader.GetString(ordinal);
                 ordinal = reader.GetOrdinal("Active");
                 state.Active = reader.GetBoolean(ordinal);
-                ordinal = reader.GetOrdinal("ModifiedDt");
-                state.ModifiedDt = reader.GetDateTime(ordinal);
-                ordinal = reader.GetOrdinal("CreateDt");
-                state.CreateDt = reader.GetDateTime(ordinal);
+                ordinal = reader.GetOrdinal("ModifiedUtcDt");
+                state.ModifiedUtcDt = reader.GetDateTime(ordinal);
+                ordinal = reader.GetOrdinal("CreateUtcDt");
+                state.CreateUtcDt = reader.GetDateTime(ordinal);
             }
             catch (Exception ex)
             {

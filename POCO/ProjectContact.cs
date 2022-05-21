@@ -34,9 +34,9 @@ namespace SQLRepositoryAsync.Data.POCO
 		[Display(Name = "Is Active")]
 		public bool Active { get; set; }
 		[Display(Name = "Modified Date")]
-		public DateTime ModifiedDt { get; set; }
+		public DateTime ModifiedUtcDt { get; set; }
 		[Display(Name = "Create Date")]
-		public DateTime CreateDt { get; set; }
+		public DateTime CreateUtcDt { get; set; }
 		public ProjectContact()
 		{
 			PK = new PrimaryKey() { 
@@ -48,7 +48,7 @@ namespace SQLRepositoryAsync.Data.POCO
 		}
 		public override string ToString()
 		{
-			return $"{ProjectId}|{ContactId}|{Active}|{ModifiedDt}|{CreateDt}|";
+			return $"{ProjectId}|{ContactId}|{Active}|{ModifiedUtcDt}|{CreateUtcDt}|";
 		}
 
 		//Relation properties
@@ -74,10 +74,10 @@ namespace SQLRepositoryAsync.Data.POCO
 				projectContact.ContactId = reader.GetInt32(ordinal);
 				ordinal = reader.GetOrdinal("Active");
 				projectContact.Active = reader.GetBoolean(ordinal);
-				ordinal = reader.GetOrdinal("ModifiedDt");
-				projectContact.ModifiedDt = reader.GetDateTime(ordinal);
-				ordinal = reader.GetOrdinal("CreateDt");
-				projectContact.CreateDt = reader.GetDateTime(ordinal);
+				ordinal = reader.GetOrdinal("ModifiedUtcDt");
+				projectContact.ModifiedUtcDt = reader.GetDateTime(ordinal);
+				ordinal = reader.GetOrdinal("CreateUtcDt");
+				projectContact.CreateUtcDt = reader.GetDateTime(ordinal);
 			}
 			catch (Exception ex)
 			{

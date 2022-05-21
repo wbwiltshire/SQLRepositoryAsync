@@ -25,8 +25,8 @@ CREATE TABLE [dbo].[Contact] (
     [EMail]      NVARCHAR (4000) NULL,
     [CityId]     INT             NOT NULL,
     [Active]     BIT             NOT NULL,
-    [ModifiedDt] DATETIME        NOT NULL,
-    [CreateDt]   DATETIME        NOT NULL,
+    [ModifiedUtcDt] DATETIME        NOT NULL,
+    [CreateUtcDt]   DATETIME        NOT NULL,
 	CONSTRAINT [PK_Contact] PRIMARY KEY CLUSTERED (	[Id] ASC)
 ) ON [PRIMARY]
 
@@ -43,8 +43,8 @@ EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Cell Phone', @
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'E-mail', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Contact', @level2type=N'COLUMN',@level2name=N'EMail'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'City Id', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Contact', @level2type=N'COLUMN',@level2name=N'CityId'
 EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Active', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Contact', @level2type=N'COLUMN',@level2name=N'Active'
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Modified Date', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Contact', @level2type=N'COLUMN',@level2name=N'ModifiedDt'
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Create Date', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Contact', @level2type=N'COLUMN',@level2name=N'CreateDt'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Modified Date', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Contact', @level2type=N'COLUMN',@level2name=N'ModifiedUtcDt'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Create Date', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Contact', @level2type=N'COLUMN',@level2name=N'CreateUtcDt'
 
 
 

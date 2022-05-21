@@ -20,15 +20,15 @@ namespace SQLRepositoryAsync.Data.Repository
 	public class ProjectRepository : RepositoryBase<Project>, IRepository<Project>
 	{
 		private const string FINDALLCOUNT_STMT = "SELECT COUNT(Id) FROM Project WHERE Active=1;";
-		private const string FINDALL_STMT = "SELECT Id,Name,Active,ModifiedDt,CreateDt FROM Project WHERE Active=1";
+		private const string FINDALL_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM Project WHERE Active=1";
 		private const string FINDALLVIEW_STMT = "";
-		private const string FINDALLPAGER_STMT = "SELECT Id,Name,Active,ModifiedDt,CreateDt FROM Project WHERE Active=1 ORDER BY Id OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY;";
+		private const string FINDALLPAGER_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM Project WHERE Active=1 ORDER BY Id OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY;";
 		private const string FINDALLVIEWPAGER_STMT = "";
-		private const string FINDBYPK_STMT = "SELECT Id,Name,Active,ModifiedDt,CreateDt FROM Project WHERE Id=@pk;";
+		private const string FINDBYPK_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM Project WHERE Id=@pk;";
 		private const string FINDBYPKVIEW_STMT = "";
-		private const string ADD_STMT = "INSERT INTO Project (Name, Active, ModifiedDt, CreateDt) VALUES (@p1,  1, GETDATE(), GETDATE()); SELECT CAST(SCOPE_IDENTITY() AS INT);";
-		private const string UPDATE_STMT = "UPDATE Project SET Name=@p1, ModifiedDt=GETDATE() WHERE Id=@pk;";
-		private const string DELETE_STMT = "UPDATE Project SET Active=0, ModifiedDt=GETDATE() WHERE Id=@pk;";
+		private const string ADD_STMT = "INSERT INTO Project (Name, Active, ModifiedUtcDt, CreateUtcDt) VALUES (@p1,  1, GETDATE(), GETDATE()); SELECT CAST(SCOPE_IDENTITY() AS INT);";
+		private const string UPDATE_STMT = "UPDATE Project SET Name=@p1, ModifiedUtcDt=GETDATE() WHERE Id=@pk;";
+		private const string DELETE_STMT = "UPDATE Project SET Active=0, ModifiedUtcDt=GETDATE() WHERE Id=@pk;";
 		private const string ORDERBY_STMT = " ORDER BY ";
 		private const string FINDALL_PAGEDPROC = "uspFindAllProjectPaged";
 		private const string FINDALL_PAGEDVIEWPROC = "uspFindAllProjectPagedView";
@@ -131,6 +131,14 @@ namespace SQLRepositoryAsync.Data.Repository
 			}
 			CMDText = FINDALLCOUNT_STMT;
 			pager.RowCount = await base.FindAllCount();
+			return pager;
+		}
+		#endregion
+		
+		#region FindAllFiltered(Pager)
+		public async Task<IPager<Project>> FindAllFiltered(IPager<Project> pager)
+		{
+			await Task.Run(() => { throw new NotImplementedException(); });
 			return pager;
 		}
 		#endregion

@@ -34,6 +34,7 @@ namespace SQLRepositoryAsync.Data.Interfaces
     {
         Task<ICollection<TEntity>> FindAll();
         Task<IPager<TEntity>> FindAll(IPager<TEntity> pager);
+        Task<IPager<TEntity>> FindAllFiltered(IPager<TEntity> pager);
         Task<TEntity> FindByPK(IPrimaryKey pk);
         Task<object> Add(TEntity entity);
         Task<int> Update(TEntity entity);

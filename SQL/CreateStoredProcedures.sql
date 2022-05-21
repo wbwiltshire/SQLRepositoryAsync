@@ -23,7 +23,7 @@ CREATE PROCEDURE uspAddContact
 	
 AS
 BEGIN
-	INSERT INTO Contact (FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt)
+	INSERT INTO Contact (FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedUtcDt, CreateUtcDt)
 		VALUES (@p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, 1, GETDATE(), GETDATE()); 
 	SELECT CAST(SCOPE_IDENTITY() AS INT);
 END
@@ -53,7 +53,7 @@ CREATE PROCEDURE uspUpdateContact
 	
 AS
 BEGIN
-	UPDATE Contact SET FirstName=@p1, LastName=@p2, Address1=@p3, Address2=@p4, Notes=@p5, ZipCode=@p6, HomePhone=@p7, WorkPhone=@p8, CellPhone=@p9, EMail=@p10, CityId=@p11, Active=1, ModifiedDt=GETDATE() 
+	UPDATE Contact SET FirstName=@p1, LastName=@p2, Address1=@p3, Address2=@p4, Notes=@p5, ZipCode=@p6, HomePhone=@p7, WorkPhone=@p8, CellPhone=@p9, EMail=@p10, CityId=@p11, Active=1, ModifiedUtcDt=GETDATE() 
 		WHERE Id =@pk AND Active=1
 END
 GO
@@ -67,29 +67,27 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROCEDURE uspFindAllContactPaged
-	@offset	INT,		-- Offset
-	@pageSize	INT,		-- PageSize
-	@sortColumn INT,	
-	@direction INT
+	@offset		INT,		-- Offset
+	@pageSize		INT,		-- PageSize
+	@sortColumn	INT,	
+	@direction	INT
 	
 AS
 BEGIN
-	SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt 
+	SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedUtcDt, CreateUtcDt 
 	FROM Contact 
 	WHERE Active=1 
 	ORDER BY
-	CASE WHEN @direction = 1 THEN
-		CASE
-			WHEN @sortColumn = 1 THEN Id 
-			ELSE Id					-- Always have a default 
-		END
-	END ASC,
-	CASE WHEN @direction = 2 THEN
-		CASE
-			WHEN @sortColumn = 1 THEN Id 
-			ELSE Id					-- Always have a default 
-		END
-	END DESC
+		CASE WHEN @direction = 1 AND @sortColumn = 1 THEN Id END ASC,
+		CASE WHEN @direction = 2 AND @sortColumn = 1 THEN Id END DESC,
+		CASE WHEN @direction = 1 AND @sortColumn = 3 THEN LastName END ASC,
+		CASE WHEN @direction = 2 AND @sortColumn = 3 THEN LastName END DESC,
+		CASE WHEN @direction = 1 AND @sortColumn = 12 THEN CityId END ASC,
+		CASE WHEN @direction = 2 AND @sortColumn = 12 THEN CityId END DESC,
+		CASE WHEN @direction = 1 AND @sortColumn = 14 THEN ModifiedUtcDt END ASC,
+		CASE WHEN @direction = 2 AND @sortColumn = 14 THEN ModifiedUtcDt END DESC,
+		CASE WHEN @direction = 1 AND @sortColumn = 15 THEN CreateUtcDt END ASC,
+		CASE WHEN @direction = 2 AND @sortColumn = 15 THEN CreateUtcDt END DESC
 	OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;
 END
 GO
@@ -110,7 +108,7 @@ CREATE PROCEDURE uspFindAllContactViewPaged
 	
 AS
 BEGIN
-	SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId,  CityName, StateId, StateName, Active, ModifiedDt, CreateDt 
+	SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId,  CityName, StateId, StateName, Active, ModifiedUtcDt, CreateUtcDt 
 	FROM vwFindAllContactView
 	ORDER BY
 	CASE WHEN @direction = 1 THEN
@@ -145,7 +143,7 @@ CREATE PROCEDURE uspAddCity
 	
 AS
 BEGIN
-	INSERT INTO City (Name, StateId, Active, ModifiedDt, CreateDt)
+	INSERT INTO City (Name, StateId, Active, ModifiedUtcDt, CreateUtcDt)
 		VALUES (@p1, @p2, 1, GETDATE(), GETDATE()); 
 	SELECT CAST(SCOPE_IDENTITY() AS INT);
 END
@@ -166,7 +164,7 @@ CREATE PROCEDURE uspUpdateCity
 	
 AS
 BEGIN
-	UPDATE City SET Name=@p1, StateId=@p2, ModifiedDt=GETDATE() 
+	UPDATE City SET Name=@p1, StateId=@p2, ModifiedUtcDt=GETDATE() 
 		WHERE Id =@pk AND Active=1
 END
 GO
@@ -187,7 +185,7 @@ CREATE PROCEDURE uspFindAllCityPaged
 	
 AS
 BEGIN
-	SELECT Id, Name, StateId, Active, ModifiedDt, CreateDt 
+	SELECT Id, Name, StateId, Active, ModifiedUtcDt, CreateUtcDt 
 	FROM City 
 	WHERE Active=1 
 	ORDER BY
@@ -223,7 +221,7 @@ CREATE PROCEDURE uspFindAllCityViewPaged
 	
 AS
 BEGIN
-	SELECT Id, Name, StateId, StateName, Active, ModifiedDt, CreateDt 
+	SELECT Id, Name, StateId, StateName, Active, ModifiedUtcDt, CreateUtcDt 
 	FROM vwFindAllCityView 
 	ORDER BY
 	CASE WHEN @direction = 1 THEN
@@ -258,7 +256,7 @@ CREATE PROCEDURE uspAddState
 	
 AS
 BEGIN
-	INSERT INTO State (Id, Name, Active, ModifiedDt, CreateDt) VALUES (@pk, @p1, 1, GETDATE(), GETDATE())
+	INSERT INTO State (Id, Name, Active, ModifiedUtcDt, CreateUtcDt) VALUES (@pk, @p1, 1, GETDATE(), GETDATE())
 END
 GO
 
@@ -276,7 +274,7 @@ CREATE PROCEDURE uspUpdateState
 	
 AS
 BEGIN
-	UPDATE State SET Name=@p1, Active=1, ModifiedDt=GETDATE() 
+	UPDATE State SET Name=@p1, Active=1, ModifiedUtcDt=GETDATE() 
 		WHERE Id = @pk AND Active=1
 END
 GO
@@ -296,7 +294,7 @@ CREATE PROCEDURE uspStoredProc
 	
 AS
 BEGIN
-	UPDATE Contact SET ModifiedDt=GETDATE() 
+	UPDATE Contact SET ModifiedUtcDt=GETDATE() 
 		WHERE Id = @pk AND Active=1
 END
 GO

@@ -43,20 +43,34 @@ namespace SQLRepositoryAsync.Data.Repository
         protected Constants.DBCommandType SqlCommandType { get; set; }
         protected MapToObjectBase<TEntity> MapToObject { get; set; }
         protected MapFromObjectBase<TEntity> MapFromObject { get; set; }
-        protected Dictionary<int, string> OrderByColumns { get; set; }
-        protected void SetOrderBy(int column, SQLOrderBy direction)
+        protected Dictionary<string, int> OrderByColumns { get; set; }
+        protected void AddOrderByStatement(string columnName, SQLOrderBy direction)
         {
-            string col = String.Empty;
-            if (OrderByColumns is null)
-                col = "Id";
-            else {
-                if (OrderByColumns.ContainsKey(column))
-                    col = OrderByColumns[column];
-                else
-                    col = "Id";
-            }
+            string safeColumnName = "Id";                        // Set as default
+            if (OrderByColumns is not null && OrderByColumns.ContainsKey(columnName))
+                safeColumnName = columnName;
                 
-            OrderBy = $"ORDER BY {col} " + (direction == SQLOrderBy.ASC ? "ASC" : "DESC");
+            OrderBy = $"ORDER BY {safeColumnName} " + (direction == SQLOrderBy.ASC ? "ASC" : "DESC");
+        }
+        protected IEnumerable<SqlParameter> AddOrderByParmeters(string columnName, SQLOrderBy direction)
+        {
+            List<SqlParameter> parms = new List<SqlParameter>();
+
+            int columnId = 1;                                   // Set as default
+
+            if (OrderByColumns is not null)
+                columnId = OrderByColumns[columnName];
+            parms.Add(new SqlParameter("@sortColumn",columnId));
+            parms.Add(new SqlParameter("@direction", (int)direction));
+
+            return parms;
+        }
+        protected string ReplaceFilterColumn(string columnName, string cmdText)
+        {
+            if (OrderByColumns is not null && OrderByColumns.ContainsKey(columnName))
+                return cmdText.Replace("@filterColumn", columnName);
+            else
+                return cmdText.Replace("@filterColumn = @filterValue AND ", "");
         }
         protected string BuildCommandText(string ct)
         {

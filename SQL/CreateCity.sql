@@ -16,8 +16,8 @@ CREATE TABLE [dbo].[City] (
     [Name]       NVARCHAR (50) NOT NULL,
     [StateId]    CHAR (2)      NOT NULL,
     [Active]     BIT           NOT NULL,
-    [ModifiedDt] DATETIME      NOT NULL,
-    [CreateDt]   DATETIME      NOT NULL
+    [ModifiedUtcDt] DATETIME      NOT NULL,
+    [CreateUtcDt]   DATETIME      NOT NULL
 	CONSTRAINT [PK_City] PRIMARY KEY CLUSTERED ( [Id] ASC)
 ) ON [PRIMARY]
 

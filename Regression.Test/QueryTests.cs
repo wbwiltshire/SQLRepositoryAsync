@@ -29,6 +29,7 @@ namespace Regression.Test
             settings = f.Settings;
         }
 
+        #region Connection Test
         [Fact]
         public async Task ConnectionTest()
         {
@@ -38,7 +39,9 @@ namespace Regression.Test
 
             dbc.Close();
         }
+        #endregion
 
+        #region FindAll Test
         [Fact]
         public async Task FindAllTest()
         {
@@ -56,7 +59,9 @@ namespace Regression.Test
 
             dbc.Close();
         }
+        #endregion
 
+        #region FindAll Paged Test with default Sort
         [Fact]
         public async Task FindAllPagedTest()
         {
@@ -80,7 +85,9 @@ namespace Regression.Test
 
             dbc.Close();
         }
+        #endregion
 
+        #region FindAll View Test
         [Fact]
         public async Task FindAllViewTest()
         {
@@ -98,7 +105,9 @@ namespace Regression.Test
 
             dbc.Close();
         }
+        #endregion
 
+        #region FindAll View Paged Test
         [Fact]
         public async Task FindAllViewPagedTest()
         {
@@ -120,7 +129,9 @@ namespace Regression.Test
 
             dbc.Close();
         }
+        #endregion
 
+        #region Find By PK (Alpha) Test
         [Fact]
         public async Task FindByPKAlphaTest()
         {
@@ -132,7 +143,9 @@ namespace Regression.Test
 
             dbc.Close();
         }
+        #endregion
 
+        #region Find By PK (Numeric) Test
         [Fact]
         public async Task FindByPKNumericTest()
         {
@@ -142,7 +155,9 @@ namespace Regression.Test
             Contact contact = await repos.FindByPK(new PrimaryKey() { Key =1 });
             Assert.NotNull(contact);
         }
+        #endregion
 
+        #region Find By Composite Key Test
         [Fact]
         public async Task FindByCompositeKeyTest()
         {
@@ -154,7 +169,9 @@ namespace Regression.Test
             ProjectContact pc = await repos.FindByPK(new PrimaryKey() { CompositeKey = new object[] { projectId, contactId }, IsComposite = true });
             Assert.NotNull(pc);
         }
+        #endregion 
 
+        #region FindView By PK (Numeric) Test 
         [Fact]
         public async Task FindViewByPKTest()
         {
@@ -169,7 +186,70 @@ namespace Regression.Test
 
             dbc.Close();
         }
+        #endregion
 
+        #region FindAll Paged with Sort Test
+        [Fact]
+        public async Task FindAllPageSorted()
+        {
+            IPager<Contact> pager;
+            int page = 0;
+            int pageSize = 10;
+
+            using (dbc = new DBContext(settings.Database.ConnectionString, logger))
+            {
+                Assert.NotNull(dbc);
+                ContactRepository repos = new ContactRepository(settings, logger, dbc);
+                pager = await repos.FindAll(new Pager<Contact>() { PageNbr = page, PageSize =pageSize, SortColumn = "LastName", Direction = SQLOrderBy.DESC });
+                Assert.True(pager.RowCount > 0);
+                Assert.True(pager.Entities.Count == pageSize);
+                Assert.True(pager.Entities.FirstOrDefault().LastName.Trim() == "Vader");
+                // TODO: Need additional tests / asserts
+            }
+
+        }
+        #endregion
+
+        #region FindAll Paged with Filter Test
+        [Fact]
+        public async Task FindAllPageFiltered()
+        {
+            IPager<Contact> pager;
+            int page = 0;
+            int pageSize = 10;
+            string firstColName = "LastName";
+            string firstFilterValue = "Vader";
+            string secondColName = "CityId";
+            int secondFilterValue = 16;
+            string dateColName = "CreateUtcDt";
+            string dateFilterValue = "2017-02-15 00:00:00.000";
+
+            using (dbc = new DBContext(settings.Database.ConnectionString, logger))
+            {
+                Assert.NotNull(dbc);
+                ContactRepository repos = new ContactRepository(settings, logger, dbc);
+                pager = await repos.FindAllFiltered(new Pager<Contact>() { PageNbr = page, PageSize = pageSize, FilterColumn = firstColName, FilterValue = firstFilterValue });
+                Assert.True(pager.RowCount > 0);
+                Assert.NotNull(pager.Entities);
+                Assert.True(pager.Entities.Count == 1);
+                Assert.True(pager.Entities.FirstOrDefault().LastName.Trim() == firstFilterValue);
+                pager = await repos.FindAllFiltered(new Pager<Contact>() { PageNbr = page, PageSize = pageSize, FilterColumn = secondColName, FilterValue = secondFilterValue });
+                Assert.True(pager.RowCount > 0);
+                Assert.NotNull(pager.Entities);
+                Assert.True(pager.Entities.Count == 4);
+                Assert.True(pager.Entities.FirstOrDefault().CityId == secondFilterValue);
+                pager = await repos.FindAllFiltered(new Pager<Contact>() { PageNbr = page, PageSize = pageSize, FilterColumn = dateColName, FilterValue = dateFilterValue });
+                Assert.True(pager.RowCount > 0);
+                Assert.NotNull(pager.Entities);
+                Assert.True(pager.Entities.Count == 2);
+                Assert.True(pager.Entities.FirstOrDefault().CreateUtcDt.ToString("yyyy-MM-dd HH:mm:ss.fff") == dateFilterValue);
+                // TODO: Need additional tests / asserts
+            }
+
+        }
+        #endregion
+
+        #region Execute NonQuery Test
         [Fact]
         public async Task ExecNonQueryTest()
         {
@@ -180,6 +260,7 @@ namespace Regression.Test
 
             dbc.Close();
         }
+        #endregion
 
         [Fact]
         public async Task ExecStoredProcTest()

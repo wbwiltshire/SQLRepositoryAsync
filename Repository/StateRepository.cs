@@ -20,13 +20,13 @@ namespace SQLRepositoryAsync.Data.Repository
     public class StateRepository : RepositoryBase<State>, IRepository<State>
     {
         private const string FINDALLCOUNT_STMT = "SELECT COUNT(Id) FROM State WHERE Active=1"; 
-        private const string FINDALL_STMT = "SELECT Id,Name,Active,ModifiedDt,CreateDt FROM State WHERE Active=1";
-        //private const string FINDALLPAGER_STMT = "SELECT TOP({0}) Id, Name, Active, ModifiedDt, CreateDt FROM (SELECT Id, Name, Active, ModifiedDt, CreateDt, ROW_NUMBER() OVER (ORDER BY {1}) AS [rc] FROM State) AS s WHERE rc > {2}";
-        private const string FINDALLPAGER_STMT = "SELECT Id,Name,Active,ModifiedDt,CreateDt FROM State WHERE Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY";
-        private const string FINDBYPK_STMT = "SELECT Id, Name, Active, ModifiedDt, CreateDt FROM State WHERE Id =@pk AND Active=1";
-        private const string ADD_STMT = "INSERT INTO State (Id, Name, Active, ModifiedDt, CreateDt) VALUES (@pk, @p1, 1, GETDATE(), GETDATE())";
-        private const string UPDATE_STMT = "UPDATE State SET Name=@p1, ModifiedDt=GETDATE() WHERE Id =@pk AND Active=1";
-        private const string DELETE_STMT = "UPDATE State SET Active=0, ModifiedDt=GETDATE() WHERE Id =@pk";
+        private const string FINDALL_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM State WHERE Active=1";
+        //private const string FINDALLPAGER_STMT = "SELECT TOP({0}) Id, Name, Active, ModifiedUtcDt, CreateUtcDt FROM (SELECT Id, Name, Active, ModifiedUtcDt, CreateUtcDt, ROW_NUMBER() OVER (ORDER BY {1}) AS [rc] FROM State) AS s WHERE rc > {2}";
+        private const string FINDALLPAGER_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM State WHERE Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY";
+        private const string FINDBYPK_STMT = "SELECT Id, Name, Active, ModifiedUtcDt, CreateUtcDt FROM State WHERE Id =@pk AND Active=1";
+        private const string ADD_STMT = "INSERT INTO State (Id, Name, Active, ModifiedUtcDt, CreateUtcDt) VALUES (@pk, @p1, 1, GETDATE(), GETDATE())";
+        private const string UPDATE_STMT = "UPDATE State SET Name=@p1, ModifiedUtcDt=GETDATE() WHERE Id =@pk AND Active=1";
+        private const string DELETE_STMT = "UPDATE State SET Active=0, ModifiedUtcDt=GETDATE() WHERE Id =@pk";
         private const string ORDERBY_STMT = " ORDER BY ";
         private const string ADD_PROC = "uspAddState";
         private const string UPDATE_PROC = "uspUpdateState";
@@ -46,8 +46,8 @@ namespace SQLRepositoryAsync.Data.Repository
         {
             logger = l;
             // Set default ordering
-            OrderByColumns = new Dictionary<int, string>() { { 1, "Id" } };
-            SetOrderBy(1, SQLOrderBy.ASC);
+            OrderByColumns = new Dictionary<string, int>() { { "Id", 1 } };
+            AddOrderByStatement("Id", SQLOrderBy.ASC);
         }
         #endregion
 
@@ -75,6 +75,14 @@ namespace SQLRepositoryAsync.Data.Repository
 
             CMDText = FINDALLCOUNT_STMT;
             pager.RowCount = await base.FindAllCount();
+            return pager;
+        }
+        #endregion
+
+        #region FindAllFiltered(Pager)
+        public async Task<IPager<State>> FindAllFiltered(IPager<State> pager)
+        {
+            await Task.Run( () => { throw new NotImplementedException(); } );
             return pager;
         }
         #endregion

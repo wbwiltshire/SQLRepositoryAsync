@@ -20,15 +20,15 @@ namespace SQLRepositoryAsync.Data.Repository
 	public class ProjectContactRepository : RepositoryBase<ProjectContact>, IRepository<ProjectContact>
 	{
 		private const string FINDALLCOUNT_STMT = "SELECT COUNT(ProjectId) FROM ProjectContact WHERE Active=1";
-		private const string FINDALL_STMT = "SELECT ProjectId,ContactId,Active,ModifiedDt,CreateDt FROM ProjectContact WHERE Active=1";
+		private const string FINDALL_STMT = "SELECT ProjectId,ContactId,Active,ModifiedUtcDt,CreateUtcDt FROM ProjectContact WHERE Active=1";
 		private const string FINDALLVIEW_STMT = "";
 		private const string FINDALLPAGER_STMT = "";
 		private const string FINDALLVIEWPAGER_STMT = "";
-		private const string FINDBYPK_STMT = "SELECT ProjectId, ContactId, Active, ModifiedDt, CreateDt FROM ProjectContact WHERE ProjectId=@pk1 AND ContactId=@pk2 AND Active=1";
+		private const string FINDBYPK_STMT = "SELECT ProjectId, ContactId, Active, ModifiedUtcDt, CreateUtcDt FROM ProjectContact WHERE ProjectId=@pk1 AND ContactId=@pk2 AND Active=1";
 		private const string FINDBYPKVIEW_STMT = "";
-		private const string ADD_STMT = "INSERT INTO ProjectContact (ProjectId, ContactId, Active, ModifiedDt, CreateDt) VALUES (@p1, @p2, 1, GETDATE(), GETDATE())";
+		private const string ADD_STMT = "INSERT INTO ProjectContact (ProjectId, ContactId, Active, ModifiedUtcDt, CreateUtcDt) VALUES (@p1, @p2, 1, GETDATE(), GETDATE())";
 		private const string UPDATE_STMT = "";
-		private const string DELETE_STMT = "UPDATE ProjectContact SET Active=0, ModifiedDt=GETDATE() WHERE ProjectId=@pk1 AND ContactId=@pk2";
+		private const string DELETE_STMT = "UPDATE ProjectContact SET Active=0, ModifiedUtcDt=GETDATE() WHERE ProjectId=@pk1 AND ContactId=@pk2";
 		private const string ORDERBY_STMT = " ORDER BY ";
 		private const string FINDALL_PAGEDPROC = "uspFindAllProjectContactPaged";
 		private const string FINDALL_PAGEDVIEWPROC = "uspFindAllProjectContactPagedView";
@@ -54,8 +54,8 @@ namespace SQLRepositoryAsync.Data.Repository
 			//
 
 			// Set default ordering
-			OrderByColumns = new Dictionary<int, string>() { { 1, "Id" } };
-			SetOrderBy(1, SQLOrderBy.ASC);
+			OrderByColumns = new Dictionary<string, int>() { { "Id", 1 } };
+			AddOrderByStatement("Id", SQLOrderBy.ASC);
 		}
 		#endregion
 
@@ -95,6 +95,14 @@ namespace SQLRepositoryAsync.Data.Repository
 			}
 			CMDText = FINDALLCOUNT_STMT;
 			pager.RowCount = await base.FindAllCount();
+			return pager;
+		}
+		#endregion
+
+		#region FindAllFiltered(Pager)
+		public async Task<IPager<ProjectContact>> FindAllFiltered(IPager<ProjectContact> pager)
+		{
+			await Task.Run(() => { throw new NotImplementedException(); });
 			return pager;
 		}
 		#endregion

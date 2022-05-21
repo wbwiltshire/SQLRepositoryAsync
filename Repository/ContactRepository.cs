@@ -15,15 +15,16 @@ namespace SQLRepositoryAsync.Data.Repository
     {
 
         private const string FINDALLCOUNT_STMT = "SELECT COUNT(Id) FROM Contact WHERE Active=1";
-        private const string FINDALL_STMT = "SELECT Id,FirstName,LastName,Address1,Address2,Notes,ZipCode,HomePhone,WorkPhone,CellPhone,EMail,CityId,Active,ModifiedDt,CreateDt FROM Contact WHERE Active=1";
-        private const string FINDALLVIEW_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, CityName, StateId, StateName, Active, ModifiedDt, CreateDt FROM vwFindAllContactView";
-        private const string FINDALLPAGER_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt FROM Contact WHERE Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;";
-        private const string FINDALLVIEWPAGER_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId,  CityName, StateId, StateName, Active, ModifiedDt, CreateDt FROM vwFindAllContactView @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;";
-        private const string FINDBYPK_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt FROM Contact WHERE Id =@pk AND Active=1";
-        private const string FINDBYPKVIEW_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, CityName, StateId, StateName, Active, ModifiedDt, CreateDt FROM vwFindAllContactView WHERE Id =@pk AND Active = 1";
-        private const string ADD_STMT = "INSERT INTO Contact (FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedDt, CreateDt) VALUES (@p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, 1, GETDATE(), GETDATE()); SELECT CAST(SCOPE_IDENTITY() AS INT);";
-        private const string UPDATE_STMT = "UPDATE Contact SET FirstName=@p1, LastName=@p2, Address1=@p3, Address2=@p4, Notes=@p5, ZipCode=@p6, HomePhone=@p7, WorkPhone=@p8, CellPhone=@p9, EMail=@p10, CityId=@p11, Active=1, ModifiedDt=GETDATE() WHERE Id =@pk AND Active=1";
-        private const string DELETE_STMT = "UPDATE Contact SET Active=0, ModifiedDt=GETDATE() WHERE Id =@pk";
+        private const string FINDALL_STMT = "SELECT Id,FirstName,LastName,Address1,Address2,Notes,ZipCode,HomePhone,WorkPhone,CellPhone,EMail,CityId,Active,ModifiedUtcDt,CreateUtcDt FROM Contact WHERE Active=1";
+        private const string FINDALLVIEW_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, CityName, StateId, StateName, Active, ModifiedUtcDt, CreateUtcDt FROM vwFindAllContactView";
+        private const string FINDALLPAGER_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedUtcDt, CreateUtcDt FROM Contact WHERE Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;";
+        private const string FINDALLPAGERFILTERED_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedUtcDt, CreateUtcDt FROM Contact WHERE @filterColumn = @filterValue AND Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;";
+        private const string FINDALLVIEWPAGER_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId,  CityName, StateId, StateName, Active, ModifiedUtcDt, CreateUtcDt FROM vwFindAllContactView @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;";
+        private const string FINDBYPK_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedUtcDt, CreateUtcDt FROM Contact WHERE Id =@pk AND Active=1";
+        private const string FINDBYPKVIEW_STMT = "SELECT Id, FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, CityName, StateId, StateName, Active, ModifiedUtcDt, CreateUtcDt FROM vwFindAllContactView WHERE Id =@pk AND Active = 1";
+        private const string ADD_STMT = "INSERT INTO Contact (FirstName, LastName, Address1, Address2, Notes, ZipCode, HomePhone, WorkPhone, CellPhone, EMail, CityId, Active, ModifiedUtcDt, CreateUtcDt) VALUES (@p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, 1, GETDATE(), GETDATE()); SELECT CAST(SCOPE_IDENTITY() AS INT);";
+        private const string UPDATE_STMT = "UPDATE Contact SET FirstName=@p1, LastName=@p2, Address1=@p3, Address2=@p4, Notes=@p5, ZipCode=@p6, HomePhone=@p7, WorkPhone=@p8, CellPhone=@p9, EMail=@p10, CityId=@p11, Active=1, ModifiedUtcDt=GETDATE() WHERE Id =@pk AND Active=1";
+        private const string DELETE_STMT = "UPDATE Contact SET Active=0, ModifiedUtcDt=GETDATE() WHERE Id =@pk";
         private const string ORDERBY_STMT = " ORDER BY ";
         private const string FINDALL_PAGEDPROC = "uspFindAllContactPaged";
         private const string FINDALL_PAGEDVIEWPROC = "uspFindAllContactViewPaged";
@@ -31,7 +32,7 @@ namespace SQLRepositoryAsync.Data.Repository
         private const string UPDATE_PROC = "uspUpdateContact";
         private const string NONQUERY_PROC = "uspNonQuery";
         private const string STORED_PROC = "uspStoredProc";
-        private const string NONQUERY_TEST = "UPDATE Contact SET ModifiedDt=GETDATE();";
+        private const string NONQUERY_TEST = "UPDATE Contact SET ModifiedUtcDt=GETDATE();";
         private ILogger logger;
 
         #region ctor
@@ -49,8 +50,8 @@ namespace SQLRepositoryAsync.Data.Repository
             logger = l;
             
             // Set default ordering
-            OrderByColumns = new Dictionary<int, string>() { { 1, "Id" } };
-            SetOrderBy(1, SQLOrderBy.ASC);
+            OrderByColumns = new Dictionary<string, int>() { { "Id", 1 }, { "LastName", 3 }, { "CityId", 12 }, { "ModifiedUtcDt", 14 }, { "CreateUtcDt", 15 } };
+            AddOrderByStatement("Id", SQLOrderBy.ASC);
         }
         #endregion
 
@@ -68,7 +69,7 @@ namespace SQLRepositoryAsync.Data.Repository
         public async Task<IPager<Contact>> FindAll(IPager<Contact> pager)
         {
             string storedProcedure = String.Empty;
-            IList<SqlParameter> parms = new List<SqlParameter>();
+            List<SqlParameter> parms = new List<SqlParameter>();
             MapToObject = new ContactMapToObject(logger);
             parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
             parms.Add(new SqlParameter("@pageSize", pager.PageSize));
@@ -76,7 +77,7 @@ namespace SQLRepositoryAsync.Data.Repository
             storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDPROC);
             if (storedProcedure == null)
             {
-                SetOrderBy(pager.SortColumn, pager.Direction);
+                AddOrderByStatement(pager.SortColumn, pager.Direction);
                 SqlCommandType = Constants.DBCommandType.SQL;
                 CMDText = BuildCommandText(FINDALLPAGER_STMT);
                 pager.Entities = await base.FindAll(parms);
@@ -84,11 +85,32 @@ namespace SQLRepositoryAsync.Data.Repository
             else
             {
                 SqlCommandType = Constants.DBCommandType.SPROC;
-                parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
-                parms.Add(new SqlParameter("@direction", (int)pager.Direction));
+                parms.AddRange(AddOrderByParmeters(pager.SortColumn, pager.Direction));
                 CMDText = storedProcedure;
                 pager.Entities = await base.FindAll(parms);
             }
+
+            CMDText = FINDALLCOUNT_STMT;
+            pager.RowCount = await base.FindAllCount();
+            return pager;
+        }
+        #endregion
+
+        #region FindAllFiltered(Pager)
+        public async Task<IPager<Contact>> FindAllFiltered(IPager<Contact> pager)
+        {
+            List<SqlParameter> parms = new List<SqlParameter>();
+            MapToObject = new ContactMapToObject(logger);
+            parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
+            parms.Add(new SqlParameter("@pageSize", pager.PageSize));
+
+            // Stored Procedures are not supported
+            AddOrderByStatement(pager.SortColumn, pager.Direction);
+            SqlCommandType = Constants.DBCommandType.SQL;
+            parms.Add(new SqlParameter("@filterValue", pager.FilterValue));
+            CMDText = BuildCommandText(ReplaceFilterColumn(pager.FilterColumn, FINDALLPAGERFILTERED_STMT));
+            pager.Entities = await base.FindAll(parms);
+
 
             CMDText = FINDALLCOUNT_STMT;
             pager.RowCount = await base.FindAllCount();
@@ -111,7 +133,7 @@ namespace SQLRepositoryAsync.Data.Repository
         public async Task<IPager<Contact>> FindAllView(IPager<Contact> pager)
         {
             string storedProcedure = String.Empty;
-            IList<SqlParameter> parms = new List<SqlParameter>();
+            List<SqlParameter> parms = new List<SqlParameter>();
             MapToObject = new ContactMapToObjectView(logger);
             parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
             parms.Add(new SqlParameter("@pageSize", pager.PageSize));
@@ -120,15 +142,14 @@ namespace SQLRepositoryAsync.Data.Repository
             if (storedProcedure == null)
             {
                 SqlCommandType = Constants.DBCommandType.SQL;
-                SetOrderBy(pager.SortColumn, pager.Direction);
+                AddOrderByStatement(pager.SortColumn, pager.Direction);
                 CMDText = BuildCommandText(FINDALLVIEWPAGER_STMT);
                 pager.Entities = await base.FindAll(parms);
             }
             else
             {
                 SqlCommandType = Constants.DBCommandType.SPROC;
-                parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
-                parms.Add(new SqlParameter("@direction", (int)pager.Direction));
+                parms.AddRange(AddOrderByParmeters(pager.SortColumn, pager.Direction));
                 CMDText = storedProcedure;
                 pager.Entities = await base.FindAll(parms);
             }

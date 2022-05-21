@@ -44,16 +44,16 @@ namespace SQLRepositoryAsync.Data.POCO
         [Display(Name = "Active")]
         public bool Active { get; set; }
         [Display(Name = "Modified Date")]
-        public DateTime ModifiedDt { get; set; }
+        public DateTime ModifiedUtcDt { get; set; }
         [Display(Name = "Create Date")]
-        public DateTime CreateDt { get; set; }
+        public DateTime CreateUtcDt { get; set; }
         public Contact()
         {
             PK = new PrimaryKey() { Key = -1, IsIdentity = true };
         }
         public override string ToString()
         {
-            return $"{Id}|{FirstName}|{LastName}|{Address1}|{Address2}|{Notes}|{ZipCode}|{HomePhone}|{WorkPhone}|{CellPhone}|{EMail}|{CityId}|{Active}|{ModifiedDt}|{CreateDt}|";
+            return $"{Id}|{FirstName}|{LastName}|{Address1}|{Address2}|{Notes}|{ZipCode}|{HomePhone}|{WorkPhone}|{CellPhone}|{EMail}|{CityId}|{Active}|{ModifiedUtcDt}|{CreateUtcDt}|";
         }
 
         //Relation properties
@@ -108,10 +108,10 @@ namespace SQLRepositoryAsync.Data.POCO
                 contact.CityId = reader.GetInt32(ordinal);
                 ordinal = reader.GetOrdinal("Active");
                 contact.Active = reader.GetBoolean(ordinal);
-                ordinal = reader.GetOrdinal("ModifiedDt");
-                contact.ModifiedDt = reader.GetDateTime(ordinal);
-                ordinal = reader.GetOrdinal("CreateDt");
-                contact.CreateDt = reader.GetDateTime(ordinal);
+                ordinal = reader.GetOrdinal("ModifiedUtcDt");
+                contact.ModifiedUtcDt = reader.GetDateTime(ordinal);
+                ordinal = reader.GetOrdinal("CreateUtcDt");
+                contact.CreateUtcDt = reader.GetDateTime(ordinal);
             }
             catch (Exception ex)
             {
@@ -142,8 +142,8 @@ namespace SQLRepositoryAsync.Data.POCO
                     State = new State { PK = new PrimaryKey { Key = reader.GetString(13), IsIdentity = false }, Name = reader.GetString(reader.GetOrdinal("StateName")) }
                 };
                 contact.Active = reader.GetBoolean(15);
-                contact.ModifiedDt = reader.GetDateTime(16);
-                contact.CreateDt = reader.GetDateTime(17);
+                contact.ModifiedUtcDt = reader.GetDateTime(16);
+                contact.CreateUtcDt = reader.GetDateTime(17);
             }
             catch (Exception ex)
             {

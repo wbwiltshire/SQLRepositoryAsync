@@ -1,6 +1,6 @@
 # SQLRepositoryAsync
 
-A sample application written in .Net which implements the Repository pattern and uses ADO.NET to asynchronously access a SQL Server database.
+A reference application written in C# .Net Core which implements the Repository pattern and uses ADO.NET to asynchronously access a SQL Server database.
 Regression testing of queries and transactions is performed using XUnit.
 
 ## Requirements
@@ -11,6 +11,11 @@ Regression testing of queries and transactions is performed using XUnit.
 * Supports Unit of Work
 * Regression tests (query and transaction) via XUnit
 * Standard exception Logging
+* Supports Paging
+* Supports Filtering and Sorting
+* Supports queries that return JSON
+* Supports queries that return a scalar value
+* Supports queries that don't return a value
 
 ### API 
 
@@ -29,13 +34,6 @@ Used to return total row count for query.  Used by FindAll with Pager.
 Return all rows without  criteria, sorting, or paging.
 
 
-#### Find All with parameters
-Return all rows for specified criteria with sorting.
-
-```C#
-	ICollection<TEntity> FindAll(IList<SQLParameter> parms)
-```
-
 #### Find All with Pager
 Return a single page with sorting.
 
@@ -43,12 +41,22 @@ Return a single page with sorting.
 	IPager<TEntity> FindAll(IPager<TEntity> pager)
 ```
 
+
+#### Find All with Pager with Filter
+Return a single page with filter and sorting.
+
+```C#
+	IPager<TEntity> FindAllFiltered(IPager<TEntity> pager)
+```
+
+
 #### Find By Primary Key
 Return a single row using primary key.
 
 ```C#
 	TEntity FindByPK(PrimaryKey pk)
 ```
+
 
 #### Add
 Add row and return the identity value of the row.
@@ -89,7 +97,7 @@ Execute a SQL Stored Procedure which does not return a row(s) or only returns an
 Execute a query which returns a JSON string.
 
 ```C#
-	string ExecStoredProc(IList<SQLParameter> parms)
+	string ExecJSONQuery(IList<SQLParameter> parms)
 ```
 
 ## Updates
@@ -97,5 +105,12 @@ Execute a query which returns a JSON string.
 - Solution was upgraded to VS2019 Community Edition
 - .Net 5.0
 
+## FAQ
+1. [Why doesn't the API support Sorting without paging?](#no-api-support-for-sorting-without-paging)
+
+#### No API support for sorting without paging
+If the result set is small enought, then just Find All and sort the result.  If it's long enough to need paging, then it's built-in.
+
+
 ## Related
-  * (Repository Pattern)[https://www.martinfowler.com/eaaCatalog/repository.html]
+  * [Repository Pattern](https://www.martinfowler.com/eaaCatalog/repository.html)

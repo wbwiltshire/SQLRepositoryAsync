@@ -27,15 +27,15 @@ namespace SQLRepositoryAsync.Data.POCO
         public string Name { get; set; }
         public string StateId { get; set; }
         public bool Active { get; set; }
-        public DateTime ModifiedDt { get; set; }
-        public DateTime CreateDt { get; set; }
+        public DateTime ModifiedUtcDt { get; set; }
+        public DateTime CreateUtcDt { get; set; }
         public City()
         {
             PK = new PrimaryKey() { Key = -1, IsIdentity = true };
         }
 		public override string ToString()
 		{
-			return $"{Id}|{Name}|{StateId}|{Active}|{ModifiedDt}|{CreateDt}|";
+			return $"{Id}|{Name}|{StateId}|{Active}|{ModifiedUtcDt}|{CreateUtcDt}|";
 		}
 
         //Relation properties
@@ -63,10 +63,10 @@ namespace SQLRepositoryAsync.Data.POCO
 				city.StateId = reader.GetString(ordinal);
 				ordinal = reader.GetOrdinal("Active");
 				city.Active = reader.GetBoolean(ordinal);
-				ordinal = reader.GetOrdinal("ModifiedDt");
-				city.ModifiedDt = reader.GetDateTime(ordinal);
-				ordinal = reader.GetOrdinal("CreateDt");
-				city.CreateDt = reader.GetDateTime(ordinal);
+				ordinal = reader.GetOrdinal("ModifiedUtcDt");
+				city.ModifiedUtcDt = reader.GetDateTime(ordinal);
+				ordinal = reader.GetOrdinal("CreateUtcDt");
+				city.CreateUtcDt = reader.GetDateTime(ordinal);
             }
             catch (Exception ex)
             {
