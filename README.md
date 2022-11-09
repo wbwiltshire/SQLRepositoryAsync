@@ -102,8 +102,9 @@ Execute a query which returns a JSON string.
 
 ## Updates
 
-- Solution was upgraded to VS2019 Community Edition
-- .Net 5.0
+- Solution was upgraded to VS2022 Community Edition
+- .Net 6.0
+- Updated Microsoft.Data.SqlClient for vulnerability
 
 ## FAQ
 1. [Why doesn't the API support Sorting without paging?](#no-api-support-for-sorting-without-paging)
