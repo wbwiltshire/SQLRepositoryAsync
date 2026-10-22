@@ -9,7 +9,8 @@ using SQLRepositoryAsync.Data;
 using SQLRepositoryAsync.Data.POCO;
 using SQLRepositoryAsync.Data.Repository;
 using Xunit;
-using Newtonsoft.Json;
+//using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Regression.Test
 {
@@ -283,7 +284,8 @@ namespace Regression.Test
             StatsRepository statsRepos = new StatsRepository(settings, logger, dbc);
 
             stats = await statsRepos.GetStats();
-            statsView = JsonConvert.DeserializeObject<StatsView>(stats.Result);
+            //statsView = JsonConvert.DeserializeObject<StatsView>(stats.Result);
+            statsView = JsonSerializer.Deserialize<StatsView>(stats.Result);
             Assert.NotNull(statsView);
             Assert.True(statsView.TotalContacts > 0);
             dbc.Close();

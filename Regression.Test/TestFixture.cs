@@ -20,6 +20,8 @@ namespace Regression.Test
             config = builder.Build();
             settings = new AppSettingsConfiguration();
             ConfigurationBinder.Bind(config, settings);
+            // Replace placeholders using  BuildConnectionString function
+            settings.Database.ConnectionString = BuildConnectionString(config);
 
             ILoggerFactory logFactory = new LoggerFactory()
                 .AddFile(config.GetSection("Logging"));
@@ -28,6 +30,15 @@ namespace Regression.Test
 
         public ILogger Logger { get { return logger; } }
         public AppSettingsConfiguration Settings { get { return settings; } }
+
+        public static string BuildConnectionString(IConfiguration config)
+        {
+            var template = config.GetSection("Database")["ConnectionString"];
+            var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
+
+            return template.Replace("${DB_PASSWORD}", password);
+        }
+
 
         public void Dispose()
         {
@@ -39,4 +50,5 @@ namespace Regression.Test
     {
 
     }
+
 }
