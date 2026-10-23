@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Data;
+using System.Reflection;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using SQLRepositoryAsync.Data;
@@ -24,6 +26,21 @@ namespace Regression.Test
             fixture = f;
             logger = f.Logger;
             settings = f.Settings;
+        }
+
+        [Fact]
+        public async Task ScopeDisposesWhenCloseFails()
+        {
+            using SqlConnection connection = new SqlConnection();
+            bool disposed = false;
+            DBContextScope scope = new DBContextScope(
+                connection,
+                () => true,
+                () => throw new InvalidOperationException("Close failed."),
+                () => disposed = true);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => scope.DisposeAsync().AsTask());
+            Assert.True(disposed);
         }
 
         [Fact]
@@ -106,6 +123,7 @@ namespace Regression.Test
                 ContactRepository contactRepos = new ContactRepository(settings, logger, db);
                 CityRepository cityRepos = new CityRepository(settings, logger, db);
                 StateRepository stateRepos = new StateRepository(settings, logger, db);
+                ProjectRepository projectRepos = new ProjectRepository(settings, logger, db);
                 ProjectContactRepository projectContactRepos = new ProjectContactRepository(settings, logger, db);
 
                 #region Add Contact Test
@@ -157,6 +175,22 @@ namespace Regression.Test
                 key = (int)await stateRepos.Add(newState);
                 Assert.True(key > 0);
                 Assert.NotNull(await stateRepos.FindByPK(new PrimaryKey() { Key = newState.Id }));
+                #endregion
+
+                #region Add Project Test
+                Project project = new Project()
+                {
+                    Name = "New Project"
+                };
+
+                ICollection<Project> projects = await projectRepos.FindAll();
+                Assert.Null(projects.Where(p => p.Name == project.Name).FirstOrDefault());
+                object identity = await projectRepos.Add(project);
+                key = Assert.IsType<int>(identity);
+                Assert.True(key > 0);
+                Assert.NotNull(await projectRepos.FindByPK(new PrimaryKey() { Key = key }));
+                Assert.Equal(1, await projectRepos.Delete(new PrimaryKey() { Key = key }));
+                Assert.Null(await projectRepos.FindByPK(new PrimaryKey() { Key = key }));
                 #endregion
 
                 #region Add ProjectContact Test
@@ -259,11 +293,35 @@ namespace Regression.Test
                 Assert.Null(contacts.Where(c => c.LastName == newContact.LastName && c.FirstName == newContact.FirstName).FirstOrDefault());
                 int key = (int)await repos.Add(newContact);
                 Assert.True(await uow.Save());
+                Assert.True(await uow.Save());
+                Assert.True(await uow.Rollback());
                 contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
                 Assert.Equal(contact.Notes, updateString);
                 Assert.True(key > 0);
                 Assert.NotNull(await repos.FindByPK(new PrimaryKey() { Key = key }));
 
+            }
+        }
+
+        [Fact]
+        public async Task FailedSaveClearsTransaction()
+        {
+            using (DBContext db = new DBContext(settings.Database.ConnectionString, logger))
+            {
+                UnitOfWork uow = new UnitOfWork(db, logger);
+                Assert.True(await uow.Enlist());
+
+                var transactionProperty = typeof(UnitOfWork).GetProperty(
+                    "Transaction",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                SqlTransaction transaction = Assert.IsType<SqlTransaction>(transactionProperty.GetValue(uow));
+
+                await transaction.RollbackAsync();
+
+                Assert.False(await uow.Save());
+                Assert.True(await uow.Save());
+                Assert.True(await uow.Rollback());
+                Assert.Null(transactionProperty.GetValue(uow));
             }
         }
 
@@ -285,6 +343,8 @@ namespace Regression.Test
                 int rows = await repos.Update(contact);
                 Assert.Equal(1, rows);
                 Assert.True(await uow.Rollback());
+                Assert.True(await uow.Rollback());
+                Assert.True(await uow.Save());
                 contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
                 Assert.Equal(contact.Notes, oldNotes);
             }

@@ -9,9 +9,49 @@ using SQLRepositoryAsync.Data.Interfaces;
 
 namespace SQLRepositoryAsync.Data.Repository
 {
+    public sealed class DBContextScope : IAsyncDisposable
+    {
+        private readonly SqlConnection connection;
+        private readonly Func<bool> shouldClose;
+        private readonly Func<Task> closeAsync;
+        private readonly System.Action dispose;
+
+        internal DBContextScope(SqlConnection connection)
+        {
+            this.connection = connection;
+            shouldClose = () => connection.State != ConnectionState.Closed;
+            closeAsync = connection.CloseAsync;
+            dispose = connection.Dispose;
+        }
+
+        internal DBContextScope(SqlConnection connection, Func<bool> shouldClose, Func<Task> closeAsync, System.Action dispose)
+        {
+            this.connection = connection;
+            this.shouldClose = shouldClose;
+            this.closeAsync = closeAsync;
+            this.dispose = dispose;
+        }
+
+        public SqlConnection Connection => connection;
+
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                if (shouldClose())
+                    await closeAsync();
+            }
+            finally
+            {
+                dispose();
+            }
+        }
+    }
+
     public class DBContext : IDBContext
     {
-        private ILogger logger;
+        private readonly ILogger logger;
+        private readonly string connectionString;
         private SqlConnection connection = null;
         private bool isOpen = false;
 
@@ -19,11 +59,12 @@ namespace SQLRepositoryAsync.Data.Repository
         public DBContext(string connectionString, ILogger l)
         {
             logger = l;
+            this.connectionString = connectionString;
             isOpen = false;
             try
             {
                 connection = new SqlConnection(connectionString);
-                logger.LogInformation($"ConnectionString: {connectionString}");
+                logger.LogInformation("Database connection context created.");
 
             }
             catch (SqlException ex)
@@ -35,6 +76,13 @@ namespace SQLRepositoryAsync.Data.Repository
         public SqlConnection Connection
         {
             get { return connection; }
+        }
+
+        public async Task<DBContextScope> CreateScopeAsync()
+        {
+            SqlConnection scopedConnection = new SqlConnection(connectionString);
+            await scopedConnection.OpenAsync();
+            return new DBContextScope(scopedConnection);
         }
 
         public async Task<bool> Open()

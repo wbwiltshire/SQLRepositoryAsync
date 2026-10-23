@@ -22,9 +22,9 @@ namespace SQLRepositoryAsync.Data.Repository
 		private const string FINDALLCOUNT_STMT = "SELECT COUNT(Id) FROM Project WHERE Active=1;";
 		private const string FINDALL_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM Project WHERE Active=1";
 		private const string FINDALLVIEW_STMT = "";
-		private const string FINDALLPAGER_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM Project WHERE Active=1 ORDER BY Id OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY;";
+		private const string FINDALLPAGER_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM Project WHERE Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;";
 		private const string FINDALLVIEWPAGER_STMT = "";
-		private const string FINDBYPK_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM Project WHERE Id=@pk;";
+		private const string FINDBYPK_STMT = "SELECT Id,Name,Active,ModifiedUtcDt,CreateUtcDt FROM Project WHERE Id=@pk AND Active=1;";
 		private const string FINDBYPKVIEW_STMT = "";
 		private const string ADD_STMT = "INSERT INTO Project (Name, Active, ModifiedUtcDt, CreateUtcDt) VALUES (@p1,  1, GETDATE(), GETDATE()); SELECT CAST(SCOPE_IDENTITY() AS INT);";
 		private const string UPDATE_STMT = "UPDATE Project SET Name=@p1, ModifiedUtcDt=GETDATE() WHERE Id=@pk;";
@@ -49,8 +49,8 @@ namespace SQLRepositoryAsync.Data.Repository
 		private void Init(ILogger l)
 		{
 			logger = l;
-			//Mapper = new CityMapper();
-			OrderBy = "Id";
+			OrderByColumns = new Dictionary<string, int>() { { "Id", 1 } };
+			AddOrderByStatement("Id", SQLOrderBy.ASC);
 		}
 		#endregion
 
@@ -58,8 +58,7 @@ namespace SQLRepositoryAsync.Data.Repository
 		public override async Task<ICollection<Project>> FindAll()
 		{
 			SqlCommandType = Constants.DBCommandType.SQL;
-			CMDText = FINDALL_STMT;
-			CMDText += ORDERBY_STMT + OrderBy;
+			CMDText = FINDALL_STMT + OrderBy;
 			MapToObject = new ProjectMapToObject(logger);
 			return await base.FindAll();
 		}
@@ -77,9 +76,10 @@ namespace SQLRepositoryAsync.Data.Repository
 			storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDPROC);
 			if (storedProcedure == null)
 			{
+				AddOrderByStatement(pager.SortColumn, pager.Direction);
 				SqlCommandType = Constants.DBCommandType.SQL;
 				CMDText = BuildCommandText(FINDALLPAGER_STMT);
-				pager.Entities = await base.FindAll();
+				pager.Entities = await base.FindAll(parms);
 			}
 			else
 			{
@@ -96,42 +96,16 @@ namespace SQLRepositoryAsync.Data.Repository
 		#endregion
 
 		#region FindAllView
-		public async Task<ICollection<Project>> FindAllView()
+		public Task<ICollection<Project>> FindAllView()
 		{
-			SqlCommandType = Constants.DBCommandType.SQL;
-			CMDText = BuildCommandText(FINDALLVIEW_STMT);
-			MapToObject = new ProjectMapToObjectView(logger);
-			return await base.FindAll();
+			throw new NotSupportedException("Project views are not provided.");
 		}
 		#endregion
 
 		#region FindAllView(IPager pager)
-		public async Task<IPager<Project>> FindAllView(IPager<Project> pager)
+		public Task<IPager<Project>> FindAllView(IPager<Project> pager)
 		{
-			string storedProcedure = String.Empty;
-			IList<SqlParameter> parms = new List<SqlParameter>();
-			MapToObject = new ProjectMapToObjectView(logger);
-			parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
-			parms.Add(new SqlParameter("@pageSize", pager.PageSize));
-
-			storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDVIEWPROC);
-			if (storedProcedure == null)
-			{
-				SqlCommandType = Constants.DBCommandType.SQL;
-				CMDText = String.Format(FINDALLVIEWPAGER_STMT, pager.PageSize * pager.PageNbr, pager.PageSize);
-				pager.Entities = await base.FindAll();
-			}
-			else
-			{
-				SqlCommandType = Constants.DBCommandType.SPROC;
-				parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
-				parms.Add(new SqlParameter("@direction", (int)pager.Direction));
-				CMDText = storedProcedure;
-				pager.Entities = await base.FindAll(parms);
-			}
-			CMDText = FINDALLCOUNT_STMT;
-			pager.RowCount = await base.FindAllCount();
-			return pager;
+			throw new NotSupportedException("Project views are not provided.");
 		}
 		#endregion
 		
@@ -154,12 +128,9 @@ namespace SQLRepositoryAsync.Data.Repository
 		#endregion
 
 		#region FindViewByPK(IPrimaryKey pk)
-		public async Task<Project> FindByPKView(IPrimaryKey pk)
+		public Task<Project> FindByPKView(IPrimaryKey pk)
 		{
-			SqlCommandType = Constants.DBCommandType.SQL;
-			CMDText = FINDBYPKVIEW_STMT;
-			MapToObject = new ProjectMapToObjectView(logger);
-			return await base.FindByPK(pk);
+			throw new NotSupportedException("Project views are not provided.");
 		}
 		#endregion
 
@@ -167,8 +138,6 @@ namespace SQLRepositoryAsync.Data.Repository
 		public async Task<object> Add(Project entity)
 		{
 			string storedProcedure = String.Empty;
-			object result;
-			string key;
 
 			storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == ADD_PROC);
 			if (storedProcedure == null)
@@ -182,12 +151,7 @@ namespace SQLRepositoryAsync.Data.Repository
 				CMDText = storedProcedure;
 			}
 			MapFromObject = new ProjectMapFromObject(logger);
-			result = await base.Add(entity, entity.PK);
-			if (result != null)
-				key = (string)result;
-			else
-				key = String.Empty;
-			return key;
+			return await base.Add(entity, entity.PK);
 		}
 		#endregion
 

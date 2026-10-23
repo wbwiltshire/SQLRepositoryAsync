@@ -13,113 +13,87 @@ namespace SQLRepositoryAsync.Data.Repository
     public class UnitOfWork : IUOW
     {
         private readonly ILogger logger;
-        private DBContext dbc;
-        private string CMDText;
-        private int transactionCount;
+        private readonly DBContext dbc;
+        private SqlTransaction transaction;
+
+        internal SqlTransaction Transaction => transaction;
 
         public UnitOfWork(DBContext d, ILogger l)
         {
             logger = l;
-            transactionCount = 0;
             dbc = d;
         }
 
-        public async Task<bool> Enlist() 
+        public async Task<bool> Enlist()
         {
-            string CMDText = "SET XACT_ABORT ON; BEGIN TRAN T1;";
-            int rows;
+            if (transaction is not null)
+                return true;
 
-            transactionCount++;
-            //Begin transaction, if first time
-            if (transactionCount == 1)
+            try
             {
-                try
-                {
-                    using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
-                    {
-                        rows = await cmd.ExecuteNonQueryAsync();
-                    }
-                }
-                catch (SqlException ex)
-                {
-                    logger.LogError(ex.Message);
-                }
+                if (dbc.Connection.State != ConnectionState.Open && !await dbc.Open())
+                    return false;
 
+                transaction = dbc.Connection.BeginTransaction();
+                logger.LogInformation("Unit of work transaction started.");
+                return true;
             }
-            return true;
+            catch (SqlException ex)
+            {
+                logger.LogError(ex, "Unable to start unit of work transaction.");
+                return false;
+            }
         }
 
         public async Task<bool> Save()
         {
-            CMDText = "COMMIT TRAN T1;";
-            bool status = false;
-            int rows;
-
-            //TODO: Do I need to check connection state here?
-            //ANSWER: No, if we don't have an open connection, we have bigger problems
-            //if (dbc.Connection.State != ConnectionState.Open)
-            //    await dbc.Open();
-
-            //Nothing to do if no transactions have enlisted
-            if (transactionCount > 0)
+            if (transaction is null)
             {
-                try
-                {
-                    using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
-                    {
-                        rows = await cmd.ExecuteNonQueryAsync();
-                        status = true;
-                        transactionCount = 0;
-                        logger.LogInformation("Save complete and unit of work committed.");
-                    }
-                }
-                catch (SqlException ex)
-                {
-                    logger.LogError(ex.Message);
-                }
-            }
-            else
-            {
-                status = true;
                 logger.LogInformation("Save ignored, because no transactions have enlisted.");
+                return true;
             }
-            return status;
+
+            SqlTransaction activeTransaction = transaction;
+
+            try
+            {
+                await activeTransaction.CommitAsync();
+                logger.LogInformation("Save complete and unit of work committed.");
+                return true;
+            }
+            catch (Exception ex) when (ex is SqlException || ex is InvalidOperationException || ex is ObjectDisposedException)
+            {
+                logger.LogError(ex, "Unable to commit unit of work transaction.");
+                return false;
+            }
+            finally
+            {
+                activeTransaction.Dispose();
+                transaction = null;
+            }
         }
 
         public async Task<bool> Rollback()
         {
-            CMDText = "ROLLBACK TRAN T1;";
-            bool status = false;
-            int rows;
-
-            //TODO: Do I need to check connection state here?
-            //ANSWER: No, if we don't have an open connection, we have bigger problems
-            //if (dbc.Connection.State != ConnectionState.Open)
-            //    await dbc.Open();
-
-            if (transactionCount > 0)
+            if (transaction is null)
             {
-                try
-                {
-                    using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
-                    {
-                        rows = await cmd.ExecuteNonQueryAsync();
-                        status = true;
-                        transactionCount = 0;
-                        logger.LogInformation("Rollback complete and unit of work cleared.");
-                    }
-                }
-                catch (SqlException ex)
-                {
-                    logger.LogError(ex.Message);
-                }
-            }
-            else
-            {
-                status = true;
                 logger.LogInformation("Rollback ignored, because no transactions have enlisted.");
+                return true;
             }
-            return status;
+
+            try
+            {
+                await transaction.RollbackAsync();
+                transaction.Dispose();
+                transaction = null;
+                logger.LogInformation("Rollback complete and unit of work cleared.");
+                return true;
+            }
+            catch (SqlException ex)
+            {
+                logger.LogError(ex, "Unable to roll back unit of work transaction.");
+                return false;
+            }
         }
 
     }

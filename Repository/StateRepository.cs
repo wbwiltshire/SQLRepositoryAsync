@@ -68,6 +68,7 @@ namespace SQLRepositoryAsync.Data.Repository
             parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
             parms.Add(new SqlParameter("@pageSize", pager.PageSize));
 
+            AddOrderByStatement(pager.SortColumn, pager.Direction);
             SqlCommandType = Constants.DBCommandType.SQL;
             CMDText = BuildCommandText(FINDALLPAGER_STMT);
             MapToObject = new StateMapToObject(logger);

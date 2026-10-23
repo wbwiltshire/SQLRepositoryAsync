@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -17,7 +18,53 @@ namespace SQLRepositoryAsync.Data.Repository
     {
         private UnitOfWork unitOfWork;
         private readonly ILogger logger;
-        private DBContext dbc;
+        private readonly DBContext dbc;
+        private sealed class OperationState
+        {
+            public string OrderBy { get; set; }
+            public string CMDText { get; set; }
+            public Constants.DBCommandType SqlCommandType { get; set; }
+            public MapToObjectBase<TEntity> MapToObject { get; set; }
+            public MapFromObjectBase<TEntity> MapFromObject { get; set; }
+
+            public OperationState Snapshot()
+            {
+                return new OperationState
+                {
+                    CMDText = CMDText,
+                    SqlCommandType = SqlCommandType,
+                    MapToObject = MapToObject,
+                    MapFromObject = MapFromObject
+                };
+            }
+        }
+
+        private static readonly AsyncLocal<OperationState> operationState = new();
+
+        private static OperationState State => operationState.Value ??= new OperationState();
+
+        private async Task<DBContextScope> CreateOperationScopeAsync()
+        {
+            if (unitOfWork is not null)
+                return null;
+
+            return await dbc.CreateScopeAsync();
+        }
+
+        private static SqlConnection GetOperationConnection(DBContextScope scope, DBContext dbc)
+        {
+            return scope?.Connection ?? dbc.Connection;
+        }
+
+        private async Task EnsureOperationConnectionAsync()
+        {
+            if (unitOfWork is null)
+                return;
+
+            await dbc.Open();
+            if (!await unitOfWork.Enlist())
+                throw new InvalidOperationException("Unable to enlist repository operation in unit of work.");
+        }
 
         #region ctor
         //ctor with no unit of work necessary
@@ -37,12 +84,32 @@ namespace SQLRepositoryAsync.Data.Repository
         }
         #endregion
 
-        protected string OrderBy { get; set; }
-        protected string CMDText { get; set; }
+        protected string OrderBy
+        {
+            get => State.OrderBy;
+            set => State.OrderBy = value;
+        }
+        protected string CMDText
+        {
+            get => State.CMDText;
+            set => State.CMDText = value;
+        }
         protected AppSettingsConfiguration Settings { get; private set; }
-        protected Constants.DBCommandType SqlCommandType { get; set; }
-        protected MapToObjectBase<TEntity> MapToObject { get; set; }
-        protected MapFromObjectBase<TEntity> MapFromObject { get; set; }
+        protected Constants.DBCommandType SqlCommandType
+        {
+            get => State.SqlCommandType;
+            set => State.SqlCommandType = value;
+        }
+        protected MapToObjectBase<TEntity> MapToObject
+        {
+            get => State.MapToObject;
+            set => State.MapToObject = value;
+        }
+        protected MapFromObjectBase<TEntity> MapFromObject
+        {
+            get => State.MapFromObject;
+            set => State.MapFromObject = value;
+        }
         protected Dictionary<string, int> OrderByColumns { get; set; }
         protected void AddOrderByStatement(string columnName, SQLOrderBy direction)
         {
@@ -83,14 +150,16 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindAllCount
         protected async Task<int> FindAllCount()
         {
+            OperationState operation = State.Snapshot();
             object cnt;
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
 
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
-                    await dbc.Open();
+                await EnsureOperationConnectionAsync();
 
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
                 {
                     //Returns an object, not an int
                     cnt = await cmd.ExecuteScalarAsync();
@@ -103,8 +172,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return 0;
+                logger.LogError(ex, "Repository count query failed.");
+                throw;
             }
         }
         #endregion
@@ -112,19 +181,27 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindAll
         public virtual async Task<ICollection<TEntity>> FindAll()
         {
+            OperationState operation = State.Snapshot();
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
+
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
+                if (unitOfWork is not null)
+                {
                     await dbc.Open();
+                    if (!await unitOfWork.Enlist())
+                        throw new InvalidOperationException("Unable to enlist repository operation in unit of work.");
+                }
 
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
                 {
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         ICollection<TEntity> entities = new List<TEntity>();
                         while (await reader.ReadAsync())
                         {
-                            entities.Add(MapToObject.Execute(reader));
+                            entities.Add(operation.MapToObject.Execute(reader));
                         }
                         logger.LogInformation($"FindAll complete for {typeof(TEntity)} entity.");
                         return entities;
@@ -133,8 +210,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return null;
+                logger.LogError(ex, "Repository FindAll query failed.");
+                throw;
             }
         }
         #endregion
@@ -142,16 +219,18 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindAll(parms)
         public virtual async Task<ICollection<TEntity>> FindAll(IList<SqlParameter> parms)
         {
+            OperationState operation = State.Snapshot();
             ICollection<TEntity> entities;
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
 
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
-                    await dbc.Open();
+                await EnsureOperationConnectionAsync();
 
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
                 {
-                    if (SqlCommandType == Constants.DBCommandType.SPROC)
+                    if (operation.SqlCommandType == Constants.DBCommandType.SPROC)
                         cmd.CommandType = CommandType.StoredProcedure;
 
                     foreach (SqlParameter parm in parms)
@@ -162,7 +241,7 @@ namespace SQLRepositoryAsync.Data.Repository
                         entities = new List<TEntity>();
                         while (await reader.ReadAsync())
                         {
-                            entities.Add(MapToObject.Execute(reader));
+                            entities.Add(operation.MapToObject.Execute(reader));
                         }
                         logger.LogInformation($"FindAll(SqlParameter) complete for {typeof(TEntity)} entity.");
                         return entities;
@@ -171,8 +250,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return null;
+                logger.LogError(ex, "Repository parameterized FindAll query failed.");
+                throw;
             }
         }
         #endregion
@@ -180,15 +259,22 @@ namespace SQLRepositoryAsync.Data.Repository
         #region FindByPK
         public virtual async Task<TEntity> FindByPK(IPrimaryKey pk)
         {
+            OperationState operation = State.Snapshot();
             int idx = 1;
             TEntity entity = null;
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
 
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
+                if (unitOfWork is not null)
+                {
                     await dbc.Open();
+                    if (!await unitOfWork.Enlist())
+                        throw new InvalidOperationException("Unable to enlist repository operation in unit of work.");
+                }
 
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
                 {
                     if (pk.IsComposite) { 
                         foreach (int k in ((PrimaryKey)pk).CompositeKey) {
@@ -201,7 +287,7 @@ namespace SQLRepositoryAsync.Data.Repository
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         if (reader.Read())
-                            entity = MapToObject.Execute(reader);
+                            entity = operation.MapToObject.Execute(reader);
                         else
                             entity = null;
                         logger.LogInformation($"FindByPK complete for {typeof(TEntity)} entity.");
@@ -210,8 +296,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return null;
+                logger.LogError(ex, "Repository FindByPK query failed.");
+                throw;
             }
 
             return entity;
@@ -221,21 +307,21 @@ namespace SQLRepositoryAsync.Data.Repository
         #region Add
         protected async Task<object> Add(TEntity entity, PrimaryKey pk)
         {
-
+            OperationState operation = State.Snapshot();
             object result = null;
             int rows = 0;
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
 
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
-                    await dbc.Open();
+                await EnsureOperationConnectionAsync();
 
-                if (unitOfWork != null) await unitOfWork.Enlist();
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
                 {
-                    if (SqlCommandType == Constants.DBCommandType.SPROC)
+                    if (operation.SqlCommandType == Constants.DBCommandType.SPROC)
                         cmd.CommandType = CommandType.StoredProcedure;
-                    MapFromObject.Execute(entity, cmd);
+                    operation.MapFromObject.Execute(entity, cmd);
 
                     //If Composite, then returns an array of objects
                     if (pk.IsComposite)
@@ -262,7 +348,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "Repository Add failed.");
+                throw;
             }
             logger.LogInformation($"Add complete for {typeof(TEntity)} entity.");
             return result;
@@ -272,26 +359,28 @@ namespace SQLRepositoryAsync.Data.Repository
         #region Update
         protected async Task<int> Update(TEntity entity, IPrimaryKey pk)
         {
+            OperationState operation = State.Snapshot();
             int rows = 0;
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
 
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
-                    await dbc.Open();
+                await EnsureOperationConnectionAsync();
 
-                if (unitOfWork != null) await unitOfWork.Enlist();
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
                 {
-                    if (SqlCommandType == Constants.DBCommandType.SPROC)
+                    if (operation.SqlCommandType == Constants.DBCommandType.SPROC)
                         cmd.CommandType = CommandType.StoredProcedure;
-                    MapFromObject.Execute(entity, cmd);
+                    operation.MapFromObject.Execute(entity, cmd);
                     cmd.Parameters.Add(new SqlParameter("@pk", pk.Key));
                     rows = await cmd.ExecuteNonQueryAsync();
                 }
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "Repository Update failed.");
+                throw;
             }
             logger.LogInformation($"Update complete for {typeof(TEntity)} entity.");
             return rows;
@@ -301,16 +390,17 @@ namespace SQLRepositoryAsync.Data.Repository
         #region Delete
         protected async Task<int> Delete(IPrimaryKey pk)
         {
+            OperationState operation = State.Snapshot();
             int idx = 1;
             int rows = 0;
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
 
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
-                    await dbc.Open();
+                await EnsureOperationConnectionAsync();
 
-                if (unitOfWork != null) await unitOfWork.Enlist();
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
                 {
                     if (pk.IsComposite)
                     {
@@ -328,7 +418,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "Repository Delete failed.");
+                throw;
             }
             logger.LogInformation($"Delete complete for {typeof(TEntity)} entity.");
             return rows;
@@ -338,16 +429,23 @@ namespace SQLRepositoryAsync.Data.Repository
         #region ExecNonQuery
         protected async Task<int> ExecNonQuery(IList<SqlParameter> p)
         {
+            OperationState operation = State.Snapshot();
             int rows = 0;
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
 
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
-                    await dbc.Open();
-
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                if (unitOfWork is not null)
                 {
-                    if (SqlCommandType == Constants.DBCommandType.SPROC)
+                    await dbc.Open();
+                    if (!await unitOfWork.Enlist())
+                        throw new InvalidOperationException("Unable to enlist repository operation in unit of work.");
+                }
+
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
+                {
+                    if (operation.SqlCommandType == Constants.DBCommandType.SPROC)
                         cmd.CommandType = CommandType.StoredProcedure;
 
                     foreach (SqlParameter s in p)
@@ -360,8 +458,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                rows = 0;
+                logger.LogError(ex, "Repository non-query failed.");
+                throw;
             }
 
             return rows;
@@ -371,15 +469,21 @@ namespace SQLRepositoryAsync.Data.Repository
         #region ExecStoredProc
         protected async Task<int> ExecStoredProc(IList<SqlParameter> p)
         {
+            OperationState operation = State.Snapshot();
             int cnt = 0;
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
 
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
+                if (unitOfWork is not null)
+                {
                     await dbc.Open();
+                    if (!await unitOfWork.Enlist())
+                        throw new InvalidOperationException("Unable to enlist repository operation in unit of work.");
+                }
 
-
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     foreach (SqlParameter s in p)
@@ -391,8 +495,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return 0;
+                logger.LogError(ex, "Repository stored procedure failed.");
+                throw;
             }
             return cnt;
         }
@@ -401,16 +505,18 @@ namespace SQLRepositoryAsync.Data.Repository
         #region ExecJSONQuery
         protected async Task<string> ExecJSONQuery(IList<SqlParameter> parms)
         {
+            OperationState operation = State.Snapshot();
             string result = String.Empty;
+            await using DBContextScope scope = await CreateOperationScopeAsync();
+            SqlConnection connection = GetOperationConnection(scope, dbc);
 
             try
             {
-                if (dbc.Connection.State != ConnectionState.Open)
-                    await dbc.Open();
+                await EnsureOperationConnectionAsync();
 
-                using (SqlCommand cmd = new SqlCommand(CMDText, dbc.Connection))
+                using (SqlCommand cmd = new SqlCommand(operation.CMDText, connection, unitOfWork?.Transaction))
                 {
-                    if (SqlCommandType == Constants.DBCommandType.SPROC)
+                    if (operation.SqlCommandType == Constants.DBCommandType.SPROC)
                         cmd.CommandType = CommandType.StoredProcedure;
 
                     foreach (SqlParameter parm in parms)
@@ -428,8 +534,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return "{}";
+                logger.LogError(ex, "Repository JSON query failed.");
+                throw;
             }
         }
         #endregion
