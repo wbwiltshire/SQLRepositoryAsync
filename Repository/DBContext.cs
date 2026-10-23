@@ -12,19 +12,39 @@ namespace SQLRepositoryAsync.Data.Repository
     public sealed class DBContextScope : IAsyncDisposable
     {
         private readonly SqlConnection connection;
+        private readonly Func<bool> shouldClose;
+        private readonly Func<Task> closeAsync;
+        private readonly System.Action dispose;
 
         internal DBContextScope(SqlConnection connection)
         {
             this.connection = connection;
+            shouldClose = () => connection.State != ConnectionState.Closed;
+            closeAsync = connection.CloseAsync;
+            dispose = connection.Dispose;
+        }
+
+        internal DBContextScope(SqlConnection connection, Func<bool> shouldClose, Func<Task> closeAsync, System.Action dispose)
+        {
+            this.connection = connection;
+            this.shouldClose = shouldClose;
+            this.closeAsync = closeAsync;
+            this.dispose = dispose;
         }
 
         public SqlConnection Connection => connection;
 
         public async ValueTask DisposeAsync()
         {
-            if (connection.State != ConnectionState.Closed)
-                await connection.CloseAsync();
-            connection.Dispose();
+            try
+            {
+                if (shouldClose())
+                    await closeAsync();
+            }
+            finally
+            {
+                dispose();
+            }
         }
     }
 

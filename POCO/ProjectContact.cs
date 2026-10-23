@@ -66,24 +66,16 @@ namespace SQLRepositoryAsync.Data.POCO
 		{
 			ProjectContact projectContact = new ProjectContact();
 			int ordinal = 0;
-			try
-			{
-				ordinal = reader.GetOrdinal("ProjectId");
-				projectContact.ProjectId = reader.GetInt32(ordinal);
-				ordinal = reader.GetOrdinal("ContactId");
-				projectContact.ContactId = reader.GetInt32(ordinal);
-				ordinal = reader.GetOrdinal("Active");
-				projectContact.Active = reader.GetBoolean(ordinal);
-				ordinal = reader.GetOrdinal("ModifiedUtcDt");
-				projectContact.ModifiedUtcDt = reader.GetDateTime(ordinal);
-				ordinal = reader.GetOrdinal("CreateUtcDt");
-				projectContact.CreateUtcDt = reader.GetDateTime(ordinal);
-			}
-			catch (Exception ex)
-			{
-				logger.LogError(ex.Message);
-				projectContact = null;
-			}
+			ordinal = reader.GetOrdinal("ProjectId");
+			projectContact.ProjectId = reader.GetInt32(ordinal);
+			ordinal = reader.GetOrdinal("ContactId");
+			projectContact.ContactId = reader.GetInt32(ordinal);
+			ordinal = reader.GetOrdinal("Active");
+			projectContact.Active = reader.GetBoolean(ordinal);
+			ordinal = reader.GetOrdinal("ModifiedUtcDt");
+			projectContact.ModifiedUtcDt = reader.GetDateTime(ordinal);
+			ordinal = reader.GetOrdinal("CreateUtcDt");
+			projectContact.CreateUtcDt = reader.GetDateTime(ordinal);
 			return projectContact;
 		}
 	}

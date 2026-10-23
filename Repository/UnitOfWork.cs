@@ -53,18 +53,23 @@ namespace SQLRepositoryAsync.Data.Repository
                 return true;
             }
 
+            SqlTransaction activeTransaction = transaction;
+
             try
             {
-                await transaction.CommitAsync();
-                transaction.Dispose();
-                transaction = null;
+                await activeTransaction.CommitAsync();
                 logger.LogInformation("Save complete and unit of work committed.");
                 return true;
             }
-            catch (SqlException ex)
+            catch (Exception ex) when (ex is SqlException || ex is InvalidOperationException || ex is ObjectDisposedException)
             {
                 logger.LogError(ex, "Unable to commit unit of work transaction.");
                 return false;
+            }
+            finally
+            {
+                activeTransaction.Dispose();
+                transaction = null;
             }
         }
 

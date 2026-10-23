@@ -43,7 +43,7 @@ There is no global SDK or repository-wide formatter/analyzer policy. Do not chan
 - Tests require a reachable SQL Server, credentials, `DCustomer`, the expected backup seed data, views, and stored procedures.
 - Run [ReloadDatabase.cmd](SQL/ReloadDatabase.cmd) from the `SQL` directory before a transaction-test rerun or after changing seed-dependent state. Read the script before running it because it destructively recreates tables and data.
 - The reload script recreates tables and loads seed data, but the procedure and view creation scripts are separate.
-- [appsettings.json](Regression.Test/appsettings.json) is not copied to test output; test discovery or startup can fail when run with only its committed location. Do not assume every test run has a working database configuration.
+- [appsettings.json](Regression.Test/appsettings.json) is copied to test output. Set `DB_PASSWORD` before running tests; startup fails if the environment variable is missing or the database configuration is invalid.
 - `QueryTests` and `TransactionTests` share one xUnit collection fixture. Avoid adding parallel stateful tests or changing the fixture to hide live database dependencies.
 - Transaction tests mutate live seed records and can make later runs fail unless the database is reloaded first.
 - Update [TestMatrix.md](Regression.Test/TestMatrix.md) when adding or removing repository behavior coverage.

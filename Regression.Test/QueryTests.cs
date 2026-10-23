@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using SQLRepositoryAsync.Data;
@@ -21,6 +23,25 @@ namespace Regression.Test
         private ILogger logger;
         private AppSettingsConfiguration settings;
         private DBContext dbc;
+
+        private sealed class InvalidSqlRepository : RepositoryBase<State>
+        {
+            private readonly ILogger repositoryLogger;
+
+            public InvalidSqlRepository(AppSettingsConfiguration settings, ILogger logger, DBContext context)
+                : base(settings, logger, context)
+            {
+                repositoryLogger = logger;
+            }
+
+            public async Task<ICollection<State>> FindAllWithInvalidSql()
+            {
+                SqlCommandType = Constants.DBCommandType.SQL;
+                CMDText = "SELECT * FROM TableThatDoesNotExist";
+                MapToObject = new StateMapToObject(repositoryLogger);
+                return await base.FindAll();
+            }
+        }
 
         //Fixture instantiated at the beginning of all the tests in this class and passed to constructor
         public QueryTests(SetupFixture f)
@@ -43,6 +64,40 @@ namespace Regression.Test
         #endregion
 
         #region FindAll Test
+        [Fact]
+        public void ProjectMappingFailureIsPropagatedTest()
+        {
+            DataTable table = new DataTable();
+            table.Columns.Add("Id", typeof(int));
+            table.Rows.Add(1);
+            using DataTableReader reader = table.CreateDataReader();
+            Assert.True(reader.Read());
+
+            ProjectMapToObject mapper = new ProjectMapToObject(NullLogger.Instance);
+            Assert.Throws<ArgumentException>(() => mapper.Execute(reader));
+
+            DataTable projectContactTable = new DataTable();
+            projectContactTable.Columns.Add("ProjectId", typeof(int));
+            projectContactTable.Rows.Add(1);
+            using DataTableReader projectContactReader = projectContactTable.CreateDataReader();
+            Assert.True(projectContactReader.Read());
+
+            ProjectContactMapToObject projectContactMapper =
+                new ProjectContactMapToObject(NullLogger.Instance);
+            Assert.Throws<ArgumentException>(() => projectContactMapper.Execute(projectContactReader));
+        }
+
+        [Fact]
+        public async Task SqlFailureIsPropagatedTest()
+        {
+            using (dbc = new DBContext(settings.Database.ConnectionString, logger))
+            {
+                InvalidSqlRepository repos = new InvalidSqlRepository(settings, logger, dbc);
+
+                await Assert.ThrowsAsync<SqlException>(() => repos.FindAllWithInvalidSql());
+            }
+        }
+
         [Fact]
         public async Task FindAllTest()
         {
@@ -98,12 +153,99 @@ namespace Regression.Test
             Assert.NotNull(cities.Entities);
             Assert.True(cities.RowCount > 0);
             Assert.NotNull(cities.Entities);
-            IPager<State> states = await stateRepos.FindAll(new Pager<State>() { PageNbr = 2, PageSize = 5 });
+            IPager<State> states = await stateRepos.FindAll(new Pager<State>()
+            {
+                PageNbr = 2,
+                PageSize = 5,
+                SortColumn = "Id",
+                Direction = SQLOrderBy.DESC
+            });
             Assert.NotNull(states.Entities);
             Assert.True(states.RowCount > 0);
             Assert.NotNull(states.Entities);
+            Assert.True(states.Entities.Select(state => state.Id).SequenceEqual(
+                states.Entities.Select(state => state.Id).OrderByDescending(id => id)));
 
             dbc.Close();
+        }
+
+        [Fact]
+        public async Task FindAllPagedDirectSqlTest()
+        {
+            AppSettingsConfiguration directSqlSettings = new AppSettingsConfiguration()
+            {
+                Database = new Database()
+                {
+                    ConnectionString = settings.Database.ConnectionString,
+                    StoredProcedures = settings.Database.StoredProcedures
+                        .Where(procedure => procedure != "uspFindAllCityPaged"
+                            && procedure != "uspFindAllProjectPaged"
+                            && procedure != "uspFindAllProjectContactPaged")
+                        .ToArray()
+                }
+            };
+
+            using (dbc = new DBContext(directSqlSettings.Database.ConnectionString, logger))
+            {
+                CityRepository cityRepos = new CityRepository(directSqlSettings, logger, dbc);
+                IPager<City> cities = await cityRepos.FindAll(new Pager<City>()
+                {
+                    PageNbr = 1,
+                    PageSize = 5,
+                    SortColumn = "Id",
+                    Direction = SQLOrderBy.DESC
+                });
+
+                Assert.Equal(5, cities.Entities.Count);
+                Assert.True(cities.RowCount > cities.Entities.Count);
+                Assert.True(cities.Entities.Select(city => city.Id).SequenceEqual(
+                    cities.Entities.Select(city => city.Id).OrderByDescending(id => id)));
+
+                ProjectRepository projectRepos = new ProjectRepository(directSqlSettings, logger, dbc);
+                IPager<Project> projects = await projectRepos.FindAll(new Pager<Project>()
+                {
+                    PageNbr = 0,
+                    PageSize = 5,
+                    SortColumn = "Id",
+                    Direction = SQLOrderBy.DESC
+                });
+
+                Assert.True(projects.Entities.Count > 0);
+                Assert.Equal(projects.RowCount, projects.Entities.Count);
+                Assert.True(projects.Entities.Select(project => project.Id).SequenceEqual(
+                    projects.Entities.Select(project => project.Id).OrderByDescending(id => id)));
+
+                ProjectContactRepository projectContactRepos =
+                    new ProjectContactRepository(directSqlSettings, logger, dbc);
+                IPager<ProjectContact> projectContacts = await projectContactRepos.FindAll(new Pager<ProjectContact>()
+                {
+                    PageNbr = 0,
+                    PageSize = 5,
+                    SortColumn = "ProjectId",
+                    Direction = SQLOrderBy.DESC
+                });
+
+                Assert.True(projectContacts.Entities.Count > 0);
+                Assert.Equal(projectContacts.RowCount, projectContacts.Entities.Count);
+                Assert.True(projectContacts.Entities.Select(projectContact => projectContact.ProjectId).SequenceEqual(
+                    projectContacts.Entities.Select(projectContact => projectContact.ProjectId).OrderByDescending(id => id)));
+            }
+        }
+
+        [Fact]
+        public async Task UnsupportedProjectViewsFailExplicitly()
+        {
+            using DBContext context = new DBContext(settings.Database.ConnectionString, logger);
+            ProjectRepository projectRepos = new ProjectRepository(settings, logger, context);
+            ProjectContactRepository projectContactRepos =
+                new ProjectContactRepository(settings, logger, context);
+
+            await Assert.ThrowsAsync<NotSupportedException>(() => projectRepos.FindAllView());
+            await Assert.ThrowsAsync<NotSupportedException>(() => projectRepos.FindAllView(new Pager<Project>()));
+            await Assert.ThrowsAsync<NotSupportedException>(() => projectRepos.FindByPKView(new PrimaryKey()));
+            await Assert.ThrowsAsync<NotSupportedException>(() => projectContactRepos.FindAllView());
+            await Assert.ThrowsAsync<NotSupportedException>(() => projectContactRepos.FindAllView(new Pager<ProjectContact>()));
+            await Assert.ThrowsAsync<NotSupportedException>(() => projectContactRepos.FindByPKView(new PrimaryKey()));
         }
         #endregion
 
@@ -141,11 +283,20 @@ namespace Regression.Test
             Assert.NotNull(contacts.Entities);
             Assert.NotNull(contacts.Entities.FirstOrDefault().City);
             Assert.NotNull(contacts.Entities.FirstOrDefault().City.State);
-            IPager<City> cities = await cityRepos.FindAllView(new Pager<City>() { PageNbr = 2, PageSize = 5 });
+            IPager<City> cities = await cityRepos.FindAllView(new Pager<City>()
+            {
+                PageNbr = 2,
+                PageSize = 5,
+                SortColumn = "Id",
+                Direction = SQLOrderBy.DESC
+            });
             Assert.NotEmpty(cities.Entities);
             Assert.True(cities.RowCount > 0);
             Assert.NotNull(cities.Entities);
             Assert.NotNull(cities.Entities.FirstOrDefault().State);
+            Assert.True(cities.Entities.Select(city => city.Id).SequenceEqual(
+                cities.Entities.Select(city => city.Id).OrderByDescending(id => id)),
+                "City IDs were: " + String.Join(",", cities.Entities.Select(city => city.Id)));
 
             dbc.Close();
         }

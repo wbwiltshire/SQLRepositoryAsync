@@ -172,8 +172,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return 0;
+                logger.LogError(ex, "Repository count query failed.");
+                throw;
             }
         }
         #endregion
@@ -210,8 +210,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return null;
+                logger.LogError(ex, "Repository FindAll query failed.");
+                throw;
             }
         }
         #endregion
@@ -250,8 +250,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return null;
+                logger.LogError(ex, "Repository parameterized FindAll query failed.");
+                throw;
             }
         }
         #endregion
@@ -296,8 +296,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return null;
+                logger.LogError(ex, "Repository FindByPK query failed.");
+                throw;
             }
 
             return entity;
@@ -348,7 +348,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "Repository Add failed.");
+                throw;
             }
             logger.LogInformation($"Add complete for {typeof(TEntity)} entity.");
             return result;
@@ -378,7 +379,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "Repository Update failed.");
+                throw;
             }
             logger.LogInformation($"Update complete for {typeof(TEntity)} entity.");
             return rows;
@@ -416,7 +418,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "Repository Delete failed.");
+                throw;
             }
             logger.LogInformation($"Delete complete for {typeof(TEntity)} entity.");
             return rows;
@@ -455,8 +458,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                rows = 0;
+                logger.LogError(ex, "Repository non-query failed.");
+                throw;
             }
 
             return rows;
@@ -492,8 +495,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return 0;
+                logger.LogError(ex, "Repository stored procedure failed.");
+                throw;
             }
             return cnt;
         }
@@ -531,8 +534,8 @@ namespace SQLRepositoryAsync.Data.Repository
             }
             catch (SqlException ex)
             {
-                logger.LogError(ex.Message);
-                return "{}";
+                logger.LogError(ex, "Repository JSON query failed.");
+                throw;
             }
         }
         #endregion

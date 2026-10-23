@@ -22,7 +22,7 @@ namespace SQLRepositoryAsync.Data.Repository
     {
         private const string FINDALLCOUNT_STMT = "SELECT COUNT(Id) FROM City WHERE Active=1";
         private const string FINDALL_STMT = "SELECT Id,Name,StateId,Active,ModifiedUtcDt,CreateUtcDt FROM City WHERE Active=1";
-        private const string FINDALLPAGER_STMT = "SELECT Id,Name,StateId,Active,ModifiedUtcDt,CreateUtcDt FROM City WHERE Active=1 @OrderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY";
+        private const string FINDALLPAGER_STMT = "SELECT Id,Name,StateId,Active,ModifiedUtcDt,CreateUtcDt FROM City WHERE Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY";
         private const string FINDALLVIEW_STMT = "SELECT Id,Name,StateId,StateName,Active,ModifiedUtcDt,CreateUtcDt FROM vwFindAllCityView ORDER BY Id";
         private const string FINDALLVIEWPAGER_STMT = "SELECT Id,Name,StateId,StateName,Active,ModifiedUtcDt,CreateUtcDt FROM vwFindAllCityView @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY";
         private const string FINDBYPK_STMT = "SELECT Id, Name, StateId, Active, ModifiedUtcDt, CreateUtcDt FROM City WHERE Id =@pk AND Active=1";
@@ -82,7 +82,7 @@ namespace SQLRepositoryAsync.Data.Repository
                 AddOrderByStatement(pager.SortColumn, pager.Direction);
                 SqlCommandType = Constants.DBCommandType.SQL;
                 CMDText = BuildCommandText(FINDALLPAGER_STMT);
-                pager.Entities = await base.FindAll();
+                pager.Entities = await base.FindAll(parms);
             }
             else
             {
@@ -120,7 +120,7 @@ namespace SQLRepositoryAsync.Data.Repository
         public async Task<IPager<City>> FindAllView(IPager<City> pager)
         {
             string storedProcedure = String.Empty;
-            IList<SqlParameter> parms = new List<SqlParameter>();
+            List<SqlParameter> parms = new List<SqlParameter>();
             MapToObject = new CityMapToObjectView(logger);
             parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
             parms.Add(new SqlParameter("@pageSize", pager.PageSize));
@@ -135,8 +135,7 @@ namespace SQLRepositoryAsync.Data.Repository
             else
             {
                 SqlCommandType = Constants.DBCommandType.SPROC;
-                parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
-                parms.Add(new SqlParameter("@direction", (int)pager.Direction));
+                parms.AddRange(AddOrderByParmeters(pager.SortColumn, pager.Direction));
                 CMDText = storedProcedure;
                 pager.Entities = await base.FindAll(parms);
             }

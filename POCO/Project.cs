@@ -50,23 +50,16 @@ namespace SQLRepositoryAsync.Data.POCO
             Project city = new Project();
             int ordinal = 0;
 
-            try
-            {
-                ordinal = reader.GetOrdinal("Id");
-                city.Id = reader.GetInt32(ordinal);
-                ordinal = reader.GetOrdinal("Name");
-                city.Name = reader.GetString(ordinal);
-                ordinal = reader.GetOrdinal("Active");
-                city.Active = reader.GetBoolean(ordinal);
-                ordinal = reader.GetOrdinal("ModifiedUtcDt");
-                city.ModifiedUtcDt = reader.GetDateTime(ordinal);
-                ordinal = reader.GetOrdinal("CreateUtcDt");
-                city.CreateUtcDt = reader.GetDateTime(ordinal);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.Message);
-            }
+            ordinal = reader.GetOrdinal("Id");
+            city.Id = reader.GetInt32(ordinal);
+            ordinal = reader.GetOrdinal("Name");
+            city.Name = reader.GetString(ordinal);
+            ordinal = reader.GetOrdinal("Active");
+            city.Active = reader.GetBoolean(ordinal);
+            ordinal = reader.GetOrdinal("ModifiedUtcDt");
+            city.ModifiedUtcDt = reader.GetDateTime(ordinal);
+            ordinal = reader.GetOrdinal("CreateUtcDt");
+            city.CreateUtcDt = reader.GetDateTime(ordinal);
             return city;
         }
     }

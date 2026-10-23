@@ -22,7 +22,7 @@ namespace SQLRepositoryAsync.Data.Repository
 		private const string FINDALLCOUNT_STMT = "SELECT COUNT(ProjectId) FROM ProjectContact WHERE Active=1";
 		private const string FINDALL_STMT = "SELECT ProjectId,ContactId,Active,ModifiedUtcDt,CreateUtcDt FROM ProjectContact WHERE Active=1";
 		private const string FINDALLVIEW_STMT = "";
-		private const string FINDALLPAGER_STMT = "";
+		private const string FINDALLPAGER_STMT = "SELECT ProjectId,ContactId,Active,ModifiedUtcDt,CreateUtcDt FROM ProjectContact WHERE Active=1 @orderBy OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY";
 		private const string FINDALLVIEWPAGER_STMT = "";
 		private const string FINDBYPK_STMT = "SELECT ProjectId, ContactId, Active, ModifiedUtcDt, CreateUtcDt FROM ProjectContact WHERE ProjectId=@pk1 AND ContactId=@pk2 AND Active=1";
 		private const string FINDBYPKVIEW_STMT = "";
@@ -53,9 +53,12 @@ namespace SQLRepositoryAsync.Data.Repository
 			// TODO: Fix multiple sort column issue
 			//
 
-			// Set default ordering
-			OrderByColumns = new Dictionary<string, int>() { { "Id", 1 } };
-			AddOrderByStatement("Id", SQLOrderBy.ASC);
+			OrderByColumns = new Dictionary<string, int>()
+			{
+				{ "ProjectId", 1 },
+				{ "ContactId", 2 }
+			};
+			AddOrderByStatement("ProjectId", SQLOrderBy.ASC);
 		}
 		#endregion
 
@@ -81,9 +84,10 @@ namespace SQLRepositoryAsync.Data.Repository
 			storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDPROC);
 			if (storedProcedure == null)
 			{
+				AddOrderByStatement(pager.SortColumn, pager.Direction);
 				SqlCommandType = Constants.DBCommandType.SQL;
 				CMDText = BuildCommandText(FINDALLPAGER_STMT);
-				pager.Entities = await base.FindAll();
+				pager.Entities = await base.FindAll(parms);
 			}
 			else
 			{
@@ -108,42 +112,16 @@ namespace SQLRepositoryAsync.Data.Repository
 		#endregion
 
 		#region FindAllView
-		public async Task<ICollection<ProjectContact>> FindAllView()
+		public Task<ICollection<ProjectContact>> FindAllView()
 		{
-			SqlCommandType = Constants.DBCommandType.SQL;
-			CMDText = BuildCommandText(FINDALLVIEW_STMT);
-			MapToObject = new ProjectContactMapToObjectView(logger);
-			return await base.FindAll();
+			throw new NotSupportedException("Project-contact views are not provided.");
 		}
 		#endregion
 
 		#region FindAllView(IPager pager)
-		public async Task<IPager<ProjectContact>> FindAllView(IPager<ProjectContact> pager)
+		public Task<IPager<ProjectContact>> FindAllView(IPager<ProjectContact> pager)
 		{
-			string storedProcedure = String.Empty;
-			IList<SqlParameter> parms = new List<SqlParameter>();
-			MapToObject = new ProjectContactMapToObjectView(logger);
-			parms.Add(new SqlParameter("@offset", pager.PageSize * pager.PageNbr));
-			parms.Add(new SqlParameter("@pageSize", pager.PageSize));
-
-			storedProcedure = Settings.Database.StoredProcedures.FirstOrDefault(p => p == FINDALL_PAGEDVIEWPROC);
-			if (storedProcedure == null)
-			{
-				SqlCommandType = Constants.DBCommandType.SQL;
-				CMDText = BuildCommandText(FINDALLVIEWPAGER_STMT);
-				pager.Entities = await base.FindAll();
-			}
-			else
-			{
-				SqlCommandType = Constants.DBCommandType.SPROC;
-				parms.Add(new SqlParameter("@sortColumn", pager.SortColumn));
-				parms.Add(new SqlParameter("@direction", (int)pager.Direction));
-				CMDText = storedProcedure;
-				pager.Entities = await base.FindAll(parms);
-			}
-			CMDText = FINDALLCOUNT_STMT;
-			pager.RowCount = await base.FindAllCount();
-			return pager;
+			throw new NotSupportedException("Project-contact views are not provided.");
 		}
 		#endregion
 
@@ -158,12 +136,9 @@ namespace SQLRepositoryAsync.Data.Repository
 		#endregion
 
 		#region FindViewByPK(IPrimaryKey pk)
-		public async Task<ProjectContact> FindByPKView(IPrimaryKey pk)
+		public Task<ProjectContact> FindByPKView(IPrimaryKey pk)
 		{
-			SqlCommandType = Constants.DBCommandType.SQL;
-			CMDText = FINDBYPKVIEW_STMT;
-			MapToObject = new ProjectContactMapToObjectView(logger);
-			return await base.FindByPK(pk);
+			throw new NotSupportedException("Project-contact views are not provided.");
 		}
 		#endregion
 
