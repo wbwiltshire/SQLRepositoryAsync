@@ -6,6 +6,7 @@ Test| SQL | SPROC | View
  -- | --- | ----- | ----
 **Contact** | | |
 FindAll          | P | NA | NA
+ConcurrentSharedRepositoryOperations | P | NA | NA
 FindAllPaged     | P | P  | NA
 FindAllView      | P | NA | P
 FindAllViewPaged | P | P  | P
@@ -38,7 +39,8 @@ Update           | P  | P  | NA
 Delete           | P  | NA | NA
 ---------------- | --- | ----- | ----
 **Transactional** | | |
-UOW      | P   | NA  | NA
-Save     | P   | NA  | NA
-Rollback | P   | NA  | NA
+UOW                    | P   | NA  | NA
+Save                   | P   | NA  | NA
+Rollback               | P   | NA  | NA
+Terminal lifecycle     | P   | NA  | NA
 

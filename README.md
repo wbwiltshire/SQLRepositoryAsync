@@ -9,6 +9,9 @@ Regression testing of queries and transactions is performed using XUnit.
 * Implements the Repository Pattern
 * All methods execute asynchronously
 * Supports Unit of Work
+* Repository instances support concurrent read/write operations with operation-local SQL and mapper state
+* Non-unit-of-work operations use an independent database connection scope per operation
+* Unit-of-work operations retain the shared transaction connection for enlist, save, and rollback
 * Regression tests (query and transaction) via XUnit
 * Standard exception Logging
 * Supports Paging
@@ -19,92 +22,83 @@ Regression testing of queries and transactions is performed using XUnit.
 
 ### API 
 
-#### Find All Count
-
-```C#
-	int FindAllCount()
-```
-Used to return total row count for query.  Used by FindAll with Pager.
-
 #### Find All
 
 ```C#
-	ICollection<TEntity> FindAll()
+Task<ICollection<TEntity>> FindAll()
 ```
-Return all rows without  criteria, sorting, or paging.
 
+Returns all active rows without criteria, sorting, or paging.
 
 #### Find All with Pager
-Return a single page with sorting.
 
 ```C#
-	IPager<TEntity> FindAll(IPager<TEntity> pager)
+Task<IPager<TEntity>> FindAll(IPager<TEntity> pager)
 ```
 
+Returns one page with sorting and paging. Repository instances may execute this concurrently with other operations.
 
 #### Find All with Pager with Filter
-Return a single page with filter and sorting.
 
 ```C#
-	IPager<TEntity> FindAllFiltered(IPager<TEntity> pager)
+Task<IPager<TEntity>> FindAllFiltered(IPager<TEntity> pager)
 ```
 
+Returns one filtered and sorted page. The implementation supports the repository's allowlisted filter and sort columns.
 
 #### Find By Primary Key
-Return a single row using primary key.
 
 ```C#
-	TEntity FindByPK(PrimaryKey pk)
+Task<TEntity> FindByPK(IPrimaryKey pk)
 ```
 
+Returns one active row or `null` when no matching row exists.
 
 #### Add
-Add row and return the identity value of the row.
 
 ```C#
-	object Add(TEntity entity, PrimaryKey pk)
+Task<object> Add(TEntity entity)
 ```
+
+Adds a row and returns its identity key, or the affected-row count for natural/composite keys. When enlisted in a unit of work, the operation remains uncommitted until `Save()` succeeds.
 
 #### Update
-Update row based on Primary Key and return the number of rows affected.
 
 ```C#
-	int Delete(TEntity entity, PrimaryKey pk)
+Task<int> Update(TEntity entity)
 ```
+
+Updates an entity and returns the number of affected rows.
 
 #### Delete
-Soft delete row based on Primary Key return the number of rows affected.
 
 ```C#
-	int Update(PrimaryKey pk)
+Task<int> Delete(PrimaryKey pk)
 ```
 
-#### Execute Non-Query with parameters
-Execute a SQL query which does not return a row(s) or only returns an integer value.
+Soft-deletes an entity by setting `Active = 0` and returns the number of affected rows.
+
+#### Unit of Work
 
 ```C#
-	int ExecNonQuery(IList<SQLParameter> parms)
+Task<bool> Save()
+Task<bool> Rollback()
 ```
 
-#### ExecuteStoredProc
-Execute a SQL Stored Procedure which does not return a row(s) or only returns an integer value.
+`Save()` commits the managed `SqlTransaction` once. `Rollback()` rolls it back once. Subsequent terminal calls are harmless and do not begin a new transaction.
 
-```C#
-	int ExecStoredProc(IList<SQLParameter> parms)
-```
+## Repository Concurrency
 
-#### Execute Query and return JSON
-Execute a query which returns a JSON string.
+A repository instance can be shared by concurrent asynchronous operations. Each operation snapshots SQL text, command type, paging SQL, and entity mappers before its first database await, preventing concurrent calls from overwriting one another's command configuration. The shared `DBContext` is only used directly for unit-of-work transactions; ordinary repository calls create and dispose a separate connection scope.
 
-```C#
-	string ExecJSONQuery(IList<SQLParameter> parms)
-```
+Transaction use remains intentionally scoped: instantiate one `UnitOfWork` for the set of operations that must commit or roll back together. Commands enlisted in that unit of work are attached to one managed `SqlTransaction`. `Save` commits it once, `Rollback` rolls it back once, and repeated terminal calls are harmless. Do not overlap unrelated transaction operations on that unit of work.
 
 ## Updates
 
-- Solution was upgraded to VS2022 Community Edition
-- .Net 6.0
-- Updated Microsoft.Data.SqlClient for vulnerability
+- Repository operations now use operation-local command state and disposable connection scopes
+- Solution upgraded to Visual Studio 2022
+- Projects target .NET 10
+- Package dependencies updated, including Microsoft.Data.SqlClient
 
 ## FAQ
 1. [Why doesn't the API support Sorting without paging?](#no-api-support-for-sorting-without-paging)

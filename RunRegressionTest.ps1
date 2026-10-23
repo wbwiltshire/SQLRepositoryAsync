@@ -6,5 +6,5 @@
 dotnet build /p:Platform="Any CPU"
 dotnet vstest .\Regression.Test\bin\Debug\net10.0\Regression.Test.dll --logger:"trx;LogFileName=TestResult.xml"
 
-## Run XUnitSummary.pos1 after the test run to generate a summary of the test results.
+## Run XUnitSummary.ps1 after the test run to generate a summary of the test results.
 pause

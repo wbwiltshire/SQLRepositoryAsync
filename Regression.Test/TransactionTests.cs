@@ -259,6 +259,8 @@ namespace Regression.Test
                 Assert.Null(contacts.Where(c => c.LastName == newContact.LastName && c.FirstName == newContact.FirstName).FirstOrDefault());
                 int key = (int)await repos.Add(newContact);
                 Assert.True(await uow.Save());
+                Assert.True(await uow.Save());
+                Assert.True(await uow.Rollback());
                 contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
                 Assert.Equal(contact.Notes, updateString);
                 Assert.True(key > 0);
@@ -285,6 +287,8 @@ namespace Regression.Test
                 int rows = await repos.Update(contact);
                 Assert.Equal(1, rows);
                 Assert.True(await uow.Rollback());
+                Assert.True(await uow.Rollback());
+                Assert.True(await uow.Save());
                 contact = await repos.FindByPK(new PrimaryKey() { Key = 11 });
                 Assert.Equal(contact.Notes, oldNotes);
             }

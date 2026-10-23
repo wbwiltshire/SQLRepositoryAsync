@@ -9,9 +9,29 @@ using SQLRepositoryAsync.Data.Interfaces;
 
 namespace SQLRepositoryAsync.Data.Repository
 {
+    public sealed class DBContextScope : IAsyncDisposable
+    {
+        private readonly SqlConnection connection;
+
+        internal DBContextScope(SqlConnection connection)
+        {
+            this.connection = connection;
+        }
+
+        public SqlConnection Connection => connection;
+
+        public async ValueTask DisposeAsync()
+        {
+            if (connection.State != ConnectionState.Closed)
+                await connection.CloseAsync();
+            connection.Dispose();
+        }
+    }
+
     public class DBContext : IDBContext
     {
-        private ILogger logger;
+        private readonly ILogger logger;
+        private readonly string connectionString;
         private SqlConnection connection = null;
         private bool isOpen = false;
 
@@ -19,11 +39,12 @@ namespace SQLRepositoryAsync.Data.Repository
         public DBContext(string connectionString, ILogger l)
         {
             logger = l;
+            this.connectionString = connectionString;
             isOpen = false;
             try
             {
                 connection = new SqlConnection(connectionString);
-                logger.LogInformation($"ConnectionString: {connectionString}");
+                logger.LogInformation("Database connection context created.");
 
             }
             catch (SqlException ex)
@@ -35,6 +56,13 @@ namespace SQLRepositoryAsync.Data.Repository
         public SqlConnection Connection
         {
             get { return connection; }
+        }
+
+        public async Task<DBContextScope> CreateScopeAsync()
+        {
+            SqlConnection scopedConnection = new SqlConnection(connectionString);
+            await scopedConnection.OpenAsync();
+            return new DBContextScope(scopedConnection);
         }
 
         public async Task<bool> Open()

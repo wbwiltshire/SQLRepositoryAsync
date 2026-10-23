@@ -64,6 +64,25 @@ namespace Regression.Test
 
         #region FindAll Paged Test with default Sort
         [Fact]
+        public async Task ConcurrentSharedRepositoryOperationsTest()
+        {
+            using (dbc = new DBContext(settings.Database.ConnectionString, logger))
+            {
+                Assert.True(await dbc.Open());
+                ContactRepository repos = new ContactRepository(settings, logger, dbc);
+
+                Task<ICollection<Contact>> allContactsTask = repos.FindAll();
+                Task<Contact> singleContactTask = repos.FindByPK(new PrimaryKey() { Key = 1 });
+                ICollection<Contact> allContacts = await allContactsTask;
+                Contact singleContact = await singleContactTask;
+
+                Assert.NotEmpty(allContacts);
+                Assert.NotNull(singleContact);
+                Assert.Equal(1, singleContact.Id);
+            }
+        }
+
+        [Fact]
         public async Task FindAllPagedTest()
         {
             Assert.NotNull(dbc = new DBContext(settings.Database.ConnectionString, logger));
