@@ -316,7 +316,7 @@ namespace Regression.Test
                     BindingFlags.Instance | BindingFlags.NonPublic);
                 SqlTransaction transaction = Assert.IsType<SqlTransaction>(transactionProperty.GetValue(uow));
 
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync(TestContext.Current.CancellationToken);
 
                 Assert.False(await uow.Save());
                 Assert.True(await uow.Save());

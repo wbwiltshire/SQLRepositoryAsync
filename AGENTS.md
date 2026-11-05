@@ -26,14 +26,14 @@ Run from the repository root:
 ```powershell
 dotnet restore .\SQLRepositoryAsync.sln
 dotnet build .\SQLRepositoryAsync.sln -c Debug
-dotnet test .\Regression.Test\Regression.Test.csproj -c Debug --no-build
+dotnet test --project .\Regression.Test\Regression.Test.csproj -c Debug --no-build
 ```
 
-Use `dotnet test` to run a focused class or test:
+Tests use xUnit v3 on Microsoft.Testing.Platform (opted in by [global.json](global.json)), the same setup as the MeanGreen and EVChargeTracker projects. Run a focused class or test:
 
 ```powershell
-dotnet test .\Regression.Test\Regression.Test.csproj -c Debug --filter FullyQualifiedName~Regression.Test.QueryTests
-dotnet test .\Regression.Test\Regression.Test.csproj -c Debug --filter FullyQualifiedName=Regression.Test.TransactionTests.SaveTest
+dotnet test --project .\Regression.Test\Regression.Test.csproj -c Debug --filter-class Regression.Test.QueryTests
+dotnet test --project .\Regression.Test\Regression.Test.csproj -c Debug --filter-method Regression.Test.TransactionTests.SaveTest
 ```
 
 There is no global SDK or repository-wide formatter/analyzer policy. Do not change target frameworks or dependency versions unless the task explicitly requires it.
@@ -41,13 +41,13 @@ There is no global SDK or repository-wide formatter/analyzer policy. Do not chan
 ## Database and Tests
 
 - Tests require a reachable SQL Server, credentials, `DCustomer`, the expected backup seed data, views, and stored procedures.
-- Run [ReloadDatabase.cmd](SQL/ReloadDatabase.cmd) from the `SQL` directory before a transaction-test rerun or after changing seed-dependent state. Read the script before running it because it destructively recreates tables and data.
+- Run [ReloadDatabase.ps1](SQL/ReloadDatabase.ps1) from the `SQL` directory (after `$DBCustomer = ./Set-DBCustomer.ps1 -Username <user> -Password '<pw>'`, which supplies its credentials) before a transaction-test rerun or after changing seed-dependent state. Read the script before running it because it destructively recreates tables and data.
 - The reload script recreates tables and loads seed data, but the procedure and view creation scripts are separate.
 - [appsettings.json](Regression.Test/appsettings.json) is copied to test output. Set `DB_PASSWORD` before running tests; startup fails if the environment variable is missing or the database configuration is invalid.
 - `QueryTests` and `TransactionTests` share one xUnit collection fixture. Avoid adding parallel stateful tests or changing the fixture to hide live database dependencies.
 - Transaction tests mutate live seed records and can make later runs fail unless the database is reloaded first.
 - Update [TestMatrix.md](Regression.Test/TestMatrix.md) when adding or removing repository behavior coverage.
-- [RunRegressionTest.ps1](RunRegressionTest.ps1) runs the net10.0 test assembly. Prefer direct `dotnet test` commands.
+- [RunRegressionTest.ps1](RunRegressionTest.ps1) builds and runs the tests, writes `TestResults\TestResult.xml` (TRX), and summarizes it with [XUnitSummary.ps1](XUnitSummary.ps1). It supports `-FilterClass`, `-FilterMethod`, `-NoBuild`, `-NoSummary`, `-NoWait`, and `-SummaryOnly`.
 
 ## SQL and Safety
 
